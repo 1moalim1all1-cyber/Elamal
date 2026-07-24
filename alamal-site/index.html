@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الأمل للدهانات</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Tajawal:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --ink:#1c1a17; --ink-soft:#2b2822;
@@ -454,7 +456,10 @@
 <div id="adminPanel">
   <div class="admin-head">
     <h3>لوحة التحكم</h3>
-    <button class="admin-close" id="adminCloseBtn">✕</button>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <button id="logoutBtn" style="display:none; background:none; border:none; color:#9a9182; font-size:12px; text-decoration:underline;">تسجيل خروج</button>
+      <button class="admin-close" id="adminCloseBtn">✕</button>
+    </div>
   </div>
   <div class="admin-tabs">
     <button class="admin-tab active" data-tab="settings">الإعدادات</button>
@@ -473,22 +478,25 @@
     <button class="modal-close" id="loginClose" style="background:rgba(28,26,23,.5);">✕</button>
     <div class="p-modal-body" style="padding-top:44px;">
       <h3 style="margin-bottom:6px;">دخول لوحة التحكم</h3>
-      <p style="margin-bottom:16px;">اكتب كلمة السر للمتابعة.</p>
+      <p style="margin-bottom:16px;">سجّل دخول بحساب الأدمن للمتابعة.</p>
+      <div class="a-field">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="loginEmailInput" placeholder="admin@example.com" autocomplete="username">
+      </div>
       <div class="a-field">
         <label>كلمة السر</label>
-        <input type="password" id="loginPasswordInput" placeholder="••••••" inputmode="numeric" autocomplete="off">
+        <input type="password" id="loginPasswordInput" placeholder="••••••••" autocomplete="current-password">
       </div>
       <button class="btn btn-primary" id="loginSubmit" style="width:100%; justify-content:center; margin-top:6px;">دخول</button>
+      <p id="loginError" style="color:var(--clay); font-size:12.5px; margin-top:10px; display:none;"></p>
     </div>
   </div>
 </div>
 
-<!-- ============ FIREBASE (لربط لوحة التحكم بقاعدة بيانات حقيقية) ============ -->
-<!-- 1) اعمل مشروع على https://console.firebase.google.com وفعّل Firestore
-     2) من إعدادات المشروع (Project settings) هتلاقي كود الـ config بتاعك، الصقه بدل القيم اللي تحت
-     3) لو سبتها من غير تعديل، الموقع هيشتغل بتخزين محلي في المتصفح بس (من غير حفظ حقيقي على السيرفر) -->
+<!-- ============ FIREBASE (لربط لوحة التحكم بقاعدة بيانات حقيقية + تسجيل دخول حقيقي) ============ -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyAJTOIvwirrWrli24x07PCyGKqG5LJAPJE",
@@ -500,10 +508,12 @@ const firebaseConfig = {
   measurementId: "G-9YW4WXEJFJ"
 };
   let db = null;
+  let auth = null;
   try{
     if(firebaseConfig.apiKey !== "YOUR_API_KEY"){
       firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
+      auth = firebase.auth();
     }
   }catch(e){ console.warn('Firebase not configured yet:', e); }
 </script>
@@ -525,7 +535,6 @@ function defaultState(){
       companyName:"الأمل للدهانات الحديثة",
       phone1:"01017908374", phone2:"01009750716", phone3:"01093132638",
       whatsapp:"01017908374", email:"info@alamal-paints.com",
-      adminPassword:"778899",
       address:"كفر الشيخ - سيدي سالم",
       mapLat:"31.263673782348633", mapLng:"30.778499603271484",
       facebookUrl:"https://www.facebook.com/profile.php?id=100086955064047",
@@ -946,37 +955,65 @@ document.getElementById('burgerBtn').addEventListener('click', ()=>{
 });
 
 /* ======================================================================
-   ADMIN PANEL
+   ADMIN PANEL — real Firebase Authentication
    ====================================================================== */
 const adminPanel = document.getElementById('adminPanel');
 const loginOverlay = document.getElementById('loginOverlay');
 ui.authenticated = false;
+let pendingAdminOpen = false;
+
+// Firebase keeps the signed-in session across page loads/tabs automatically,
+// so an admin who signs in once stays signed in while browsing every page.
+if(auth){
+  auth.onAuthStateChanged(user=>{
+    ui.authenticated = !!user;
+    if(user && pendingAdminOpen){ pendingAdminOpen = false; openAdmin(); }
+    updateLogoutVisibility();
+  });
+}
+function updateLogoutVisibility(){
+  const btn = document.getElementById('logoutBtn');
+  if(btn) btn.style.display = ui.authenticated ? 'inline' : 'none';
+}
 
 function requestAdmin(){
+  if(!auth){ showToast('لوحة التحكم غير متاحة بدون اتصال Firebase'); return; }
   if(ui.authenticated){ openAdmin(); return; }
+  pendingAdminOpen = true;
   loginOverlay.classList.add('open');
-  const input = document.getElementById('loginPasswordInput');
-  input.value = '';
-  setTimeout(()=>input.focus(), 50);
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+  document.getElementById('loginEmailInput').value = '';
+  document.getElementById('loginPasswordInput').value = '';
+  setTimeout(()=>document.getElementById('loginEmailInput').focus(), 50);
 }
 function attemptLogin(){
-  const input = document.getElementById('loginPasswordInput');
-  const typed = (input.value||'').trim();
-  const expected = (state.settings.adminPassword||'').trim();
-  if(!typed){ showToast('اكتب كلمة السر'); return; }
-  if(typed === expected){
-    ui.authenticated = true;
-    loginOverlay.classList.remove('open');
-    openAdmin();
-    showToast('تم الدخول ✓');
-  } else {
-    showToast('كلمة السر غير صحيحة');
-  }
+  const email = (document.getElementById('loginEmailInput').value||'').trim();
+  const pass = (document.getElementById('loginPasswordInput').value||'').trim();
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+  if(!email || !pass){ errEl.textContent = 'اكتب البريد الإلكتروني وكلمة السر'; errEl.style.display='block'; return; }
+  const btn = document.getElementById('loginSubmit');
+  btn.disabled = true; btn.textContent = 'جاري الدخول...';
+  auth.signInWithEmailAndPassword(email, pass)
+    .then(()=>{
+      loginOverlay.classList.remove('open');
+      showToast('تم الدخول ✓');
+    })
+    .catch(err=>{
+      errEl.textContent = 'البريد الإلكتروني أو كلمة السر غير صحيحة';
+      errEl.style.display = 'block';
+    })
+    .finally(()=>{ btn.disabled = false; btn.textContent = 'دخول'; });
 }
 document.getElementById('loginSubmit').addEventListener('click', attemptLogin);
 document.getElementById('loginPasswordInput').addEventListener('keydown', e=>{ if(e.key==='Enter') attemptLogin(); });
-document.getElementById('loginClose').addEventListener('click', ()=> loginOverlay.classList.remove('open'));
-loginOverlay.addEventListener('click', e=>{ if(e.target.id==='loginOverlay') loginOverlay.classList.remove('open'); });
+document.getElementById('loginEmailInput').addEventListener('keydown', e=>{ if(e.key==='Enter') attemptLogin(); });
+document.getElementById('loginClose').addEventListener('click', ()=>{ loginOverlay.classList.remove('open'); pendingAdminOpen = false; });
+loginOverlay.addEventListener('click', e=>{ if(e.target.id==='loginOverlay'){ loginOverlay.classList.remove('open'); pendingAdminOpen = false; } });
+document.getElementById('logoutBtn')?.addEventListener('click', ()=>{
+  auth?.signOut().then(()=>{ closeAdmin(); showToast('تم تسجيل الخروج'); });
+});
 
 function openAdmin(){ ui.panelOpen = true; adminPanel.classList.add('open'); renderAdmin(); }
 function closeAdmin(){ ui.panelOpen = false; adminPanel.classList.remove('open'); }
@@ -1056,8 +1093,7 @@ function adminSettingsHTML(){
       <div class="a-field" style="flex:1;">${field('إحداثيات الخريطة (Lng)','mapLng',s.mapLng)}</div>
     </div>
     <div class="admin-section-title">الأمان</div>
-    <div class="admin-hint">الرقم ده هو كلمة السر اللي بتتطلب لفتح لوحة التحكم. غيّره لرقم تعرفه إنت بس، ومتشاركوش مع حد.</div>
-    ${field('كلمة السر لتسجيل الدخول','adminPassword',s.adminPassword)}
+    <div class="admin-hint">تسجيل الدخول بقى بحساب حقيقي على Firebase (بريد إلكتروني وكلمة سر)، مش رقم يتخزن في الموقع. لإضافة أدمن جديد أو تغيير كلمة السر: روح Firebase Console → Authentication → Users.</div>
     <div class="admin-section-title">الفوتر</div>
     ${field('نص حقوق النشر','footerCopy',s.footerCopy)}
     <button class="a-reset" id="resetSettings">استعادة كل الإعدادات الافتراضية</button>
@@ -1225,12 +1261,19 @@ function setupReveal(){
   document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 }
 
-(async function boot(){
-  await loadState();
+(function boot(){
+  // 1) Paint immediately with default content — no waiting on the network.
   applyProductsUrlFilter();
   render();
   highlightActiveNav();
   setupReveal();
+
+  // 2) Fetch the real saved data in the background, then update the page.
+  loadState().then(()=>{
+    applyProductsUrlFilter();
+    render();
+    setupReveal();
+  });
 })();
 </script>
 </body>
