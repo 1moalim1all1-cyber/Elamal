@@ -1,0 +1,13 @@
+:root{--brand-navy:#071a2f;--brand-blue:#0d64d8;--brand-cyan:#10b8d5;--brand-orange:#ff6b18;--brand-bg:#f6f8fb;--brand-text:#132238;--brand-muted:#66758b;--brand-line:#e4eaf1;--brand-shadow:0 20px 60px rgba(7,26,47,.13)}
+html{scroll-behavior:smooth}body{background:#fff;color:var(--brand-text)}
+header,.header,.navbar{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+section{position:relative}.container{width:min(1180px,calc(100% - 36px));margin-inline:auto}
+button,a,.btn{transition:transform .25s ease,box-shadow .25s ease,background .25s ease,color .25s ease}
+.btn:hover,button:hover{transform:translateY(-2px)}
+.card,.product,.cat,.quote,.contact-card,.feature{border-radius:22px!important;box-shadow:0 14px 40px rgba(7,26,47,.07);border-color:var(--brand-line)!important}
+img{max-width:100%}.admin-link,a[href*="admin.html"],a[href*="alamal-control"]{display:none!important}
+.wa-float{position:fixed;left:22px;bottom:22px;z-index:9999;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:#25d366;color:#fff;box-shadow:0 16px 35px rgba(37,211,102,.35);border:4px solid #fff;text-decoration:none;animation:waPulse 2.4s infinite}
+.wa-float svg{width:31px;height:31px;fill:currentColor}.wa-float:hover{transform:translateY(-5px) scale(1.04)}
+.wa-label{position:fixed;left:94px;bottom:35px;z-index:9998;background:var(--brand-navy);color:#fff;padding:9px 13px;border-radius:10px;font:700 13px Tajawal,Arial,sans-serif;box-shadow:var(--brand-shadow)}
+@keyframes waPulse{0%,100%{box-shadow:0 16px 35px rgba(37,211,102,.35),0 0 0 0 rgba(37,211,102,.25)}50%{box-shadow:0 16px 35px rgba(37,211,102,.35),0 0 0 13px rgba(37,211,102,0)}}
+@media(max-width:700px){.wa-float{width:55px;height:55px;left:15px;bottom:15px}.wa-label{display:none}.wa-float svg{width:27px;height:27px}}
