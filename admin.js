@@ -118,11 +118,23 @@ async function loadContent() {
   }
 
   if (db) {
-    const snapshot = await fb.getDoc(fb.doc(db, 'site', 'content'));
+    try {
+      const snapshot = await Promise.race([
+        fb.getDoc(fb.doc(db, 'site', 'content')),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('انتهت مهلة تحميل البيانات من Firebase')),
+            12000
+          )
+        )
+      ]);
 
-    if (snapshot.exists()) {
-      mergeContent(snapshot.data());
-      localStorage.setItem('alamalContent', JSON.stringify(data));
+      if (snapshot.exists()) {
+        mergeContent(snapshot.data());
+        localStorage.setItem('alamalContent', JSON.stringify(data));
+      }
+    } catch (error) {
+      console.warn('تعذر تحميل بيانات Firebase، سيتم استخدام البيانات المحلية:', error);
     }
   }
 }
@@ -457,50 +469,73 @@ function setupImagePreview() {
 }
 
 function setupLogin() {
-  $('#loginForm').addEventListener('submit', async (event) => {
+  const form = $('#loginForm');
+  const submitButton = form.querySelector('button[type="submit"]');
+
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const email = $('#email').value.trim().toLowerCase();
     const password = $('#password').value;
     const status = $('#loginStatus');
 
-    status.textContent = 'جاري الدخول...';
+    submitButton.disabled = true;
+    submitButton.textContent = 'جاري الدخول...';
+    status.textContent = 'جاري التحقق من الحساب...';
 
-    if (!firebaseEnabled) {
-      if (
-        email !== 'admin@alamal.com' ||
-        password !== '7460077'
-      ) {
-        status.textContent =
-          'البريد الإلكتروني أو كلمة السر غير صحيحة';
+    try {
+      if (!firebaseEnabled) {
+        if (email !== 'admin@alamal.com' || password !== '7460077') {
+          const error = new Error('البريد الإلكتروني أو كلمة السر غير صحيحة.');
+          error.code = 'auth/invalid-credential';
+          throw error;
+        }
+
+        localStorage.setItem('alamalAdmin', '1');
+        await loadContent();
+        showApp();
+        status.textContent = '';
         return;
       }
 
-      localStorage.setItem('alamalAdmin', '1');
+      if (!auth || !fb.signInWithEmailAndPassword) {
+        throw new Error('لم يكتمل تحميل Firebase. حدّث الصفحة وحاول مرة أخرى.');
+      }
 
+      const credential = await Promise.race([
+        fb.signInWithEmailAndPassword(auth, email, password),
+        new Promise((_, reject) =>
+          setTimeout(() => {
+            const error = new Error('انتهت مهلة تسجيل الدخول.');
+            error.code = 'auth/timeout';
+            reject(error);
+          }, 15000)
+        )
+      ]);
+
+      currentUser = credential.user;
+      status.textContent = 'تم تسجيل الدخول، جاري فتح لوحة التحكم...';
       await loadContent();
       showApp();
-
       status.textContent = '';
-      return;
-    }
-
-    try {
-      await fb.signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
     } catch (error) {
       console.error(error);
+
       const messages = {
         'auth/invalid-credential': 'البريد الإلكتروني أو كلمة السر غير صحيحة.',
         'auth/user-not-found': 'حساب الأدمن غير موجود في Firebase Authentication.',
         'auth/wrong-password': 'كلمة السر غير صحيحة.',
         'auth/too-many-requests': 'محاولات كثيرة. انتظر قليلًا ثم جرّب مرة أخرى.',
-        'auth/network-request-failed': 'تعذر الاتصال بالإنترنت.'
+        'auth/network-request-failed': 'تعذر الاتصال بخدمة Firebase. تأكد من الإنترنت.',
+        'auth/operation-not-allowed': 'فعّل Email/Password من Firebase Authentication.',
+        'auth/unauthorized-domain': 'أضف 1moalim1all1-cyber.github.io إلى Authorized domains في Firebase.',
+        'auth/timeout': 'تسجيل الدخول استغرق وقتًا طويلًا. فعّل Email/Password وأضف نطاق GitHub Pages إلى Authorized domains.'
       };
+
       status.textContent = messages[error.code] || `تعذر الدخول: ${error.message}`;
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = 'دخول';
     }
   });
 }
@@ -544,6 +579,8 @@ async function start() {
         $('#login').style.display = 'grid';
         return;
       }
+
+      if ($('#app').style.display === 'block') return;
 
       currentUser = user;
       await loadContent();
