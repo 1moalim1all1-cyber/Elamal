@@ -1,24 +1,112 @@
-import { firebaseConfig, firebaseEnabled } from './firebase-config.js';
-import { defaultContent } from './default-content.js';
-let data=structuredClone(defaultContent), auth,db,storage,user,fb={};
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const pathGet=(o,p)=>p.split('.').reduce((a,k)=>a?.[k],o);
-const pathSet=(o,p,v)=>{let a=o,k=p.split('.');k.slice(0,-1).forEach(x=>a=a[x]??={});a[k.at(-1)]=v};
-async function initFirebase(){if(!firebaseEnabled)return false;try{const appM=await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js'),authM=await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js'),fsM=await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js'),stM=await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js');const app=appM.initializeApp(firebaseConfig);auth=authM.getAuth(app);db=fsM.getFirestore(app);storage=stM.getStorage(app);fb={...authM,...fsM,...stM};return true}catch(e){alert('خطأ Firebase: '+e.message);return false}}
-function showApp(){ $('#login').style.display='none';$('#app').style.display='block';fill(); }
-async function load(){const raw=localStorage.getItem('alamalContent');if(raw)data={...data,...JSON.parse(raw)};if(db){const s=await fb.getDoc(fb.doc(db,'site','content'));if(s.exists())data={...data,...s.data()}}}
-function fill(){ $$('[data-path]').forEach(e=>e.value=pathGet(data,e.dataset.path)||'');renderLists() }
-function collect(){ $$('[data-path]').forEach(e=>pathSet(data,e.dataset.path,e.value)); }
-function esc(v=''){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function listHtml(type,fields){return (data[type]||[]).map((it,i)=>`<div class="repeat" data-item="${type}" data-index="${i}"><div class="grid">${fields.map(f=>`<div class="field ${f.full?'full':''}"><label>${f.label}</label>${f.area?`<textarea rows="3" data-key="${f.key}">${esc(it[f.key]||'')}</textarea>`:f.options?`<select data-key="${f.key}">${f.options.map(o=>`<option value="${esc(o.value)}" ${it[f.key]===o.value?'selected':''}>${esc(o.label)}</option>`).join('')}</select>`:`<input data-key="${f.key}" type="${f.type||'text'}" value="${esc(it[f.key]||'')}">`}${f.upload?`<input type="file" accept="image/*" data-item-upload="${type}.${i}.${f.key}">`:''}</div>`).join('')}</div><div class="row-actions"><button class="btn danger" data-remove="${type}.${i}">حذف</button></div></div>`).join('')}
-function renderLists(){ const cats=[{value:'دهانات داخلية',label:'دهانات داخلية'},{value:'دهانات خارجية',label:'دهانات خارجية'},{value:'دهانات ديكورية',label:'دهانات ديكورية'}]; $('#productsList').innerHTML=listHtml('products',[{key:'name',label:'اسم الصنف'},{key:'category',label:'اختر القسم',options:cats},{key:'description',label:'وصف الصنف',area:true,full:true},{key:'color',label:'اختر لون الصنف',type:'color'},{key:'image',label:'صورة الصنف أو رابطها',upload:true}]);$('#projectsList').innerHTML=listHtml('projects',[{key:'title',label:'اسم المشروع'},{key:'subtitle',label:'وصف قصير'},{key:'image',label:'الصورة أو رابطها',upload:true,full:true}]);$('#testimonialsList').innerHTML=listHtml('testimonials',[{key:'name',label:'اسم العميل'},{key:'role',label:'الصفة'},{key:'text',label:'الرأي',area:true,full:true}]);}
-function collectLists(){ $$('[data-item]').forEach(box=>{const a=data[box.dataset.item][+box.dataset.index];box.querySelectorAll('[data-key]').forEach(e=>a[e.dataset.key]=e.value)}) }
-async function upload(file,path){if(!file)return '';if(!storage){return await new Promise((res,rej)=>{const r=new FileReader;r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)})}const r=fb.ref(storage,`site/${Date.now()}-${file.name}`);await fb.uploadBytes(r,file);return await fb.getDownloadURL(r)}
-async function save(){collect();collectLists();$('#message').innerHTML='<div class="notice">جاري الحفظ...</div>';try{for(const el of $$('[data-upload]'))if(el.files[0])pathSet(data,el.dataset.upload,await upload(el.files[0],el.dataset.upload));for(const el of $$('[data-item-upload]'))if(el.files[0]){const [t,i,k]=el.dataset.itemUpload.split('.');data[t][+i][k]=await upload(el.files[0],el.dataset.itemUpload)}localStorage.setItem('alamalContent',JSON.stringify(data));if(db)await fb.setDoc(fb.doc(db,'site','content'),data);$('#message').innerHTML='<div class="notice ok">تم حفظ التعديلات بنجاح. افتح الموقع أو حدّث الصفحة لرؤيتها.</div>';fill()}catch(e){$('#message').innerHTML='<div class="notice">تعذر الحفظ: '+esc(e.message)+'</div>'}}
-$('.tab').onclick=null;$$('.tab').forEach(b=>b.onclick=()=>{$$('.tab').forEach(x=>x.classList.remove('active'));$$('.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.panel).classList.add('active');$('#pageTitle').textContent=b.textContent});
-$$('[data-add]').forEach(b=>b.onclick=()=>{collectLists();const t=b.dataset.add;if(t==='products')data[t].push({name:'صنف جديد',category:'دهانات داخلية',description:'',color:'#0d64d8',image:''});if(t==='projects')data[t].push({title:'مشروع جديد',subtitle:'',image:''});if(t==='testimonials')data[t].push({name:'عميل جديد',role:'',text:''});renderLists()});
-document.addEventListener('click',e=>{if(e.target.dataset.remove){collectLists();const[t,i]=e.target.dataset.remove.split('.');data[t].splice(+i,1);renderLists()}});$('#save').onclick=save;
-$('#loginForm').onsubmit=async e=>{e.preventDefault();$('#loginStatus').textContent='جاري الدخول...';if(!firebaseEnabled){if($('#email').value.trim()!=='01071908374'||$('#password').value!=='7460077'){ $('#loginStatus').textContent='رقم الموبايل أو كلمة السر غير صحيحة'; return; }localStorage.setItem('alamalAdmin','1');await load();showApp();return}try{await fb.signInWithEmailAndPassword(auth,$('#email').value,$('#password').value)}catch(err){$('#loginStatus').textContent='تعذر الدخول: '+err.message}};
-$('#logout').onclick=async()=>{if(auth)await fb.signOut(auth);localStorage.removeItem('alamalAdmin');location.reload()};
-const connected=await initFirebase();$('#mode').textContent=connected?'متصل بـ Firebase — التعديلات تظهر لكل الزوار':'وضع التجربة المحلي — أضف بيانات Firebase للنشر الفعلي';$('#loginHint').textContent=connected?'سجل دخولك بحساب الأدمن في Firebase.':'استخدم رقم الموبايل وكلمة السر الخاصة بالأدمن.';
-if(connected){fb.onAuthStateChanged(auth,async u=>{if(u){user=u;await load();showApp()}})}else if(localStorage.getItem('alamalAdmin')){await load();showApp()}
+import { auth, db } from "./firebase-config.js";
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+const ADMIN_EMAIL = "admin@alamal.com";
+const loginView = document.getElementById("loginView");
+const dashboardView = document.getElementById("dashboardView");
+const loginForm = document.getElementById("loginForm");
+const loginButton = document.getElementById("loginButton");
+const loginMessage = document.getElementById("loginMessage");
+const logoutButton = document.getElementById("logoutButton");
+const adminEmailLabel = document.getElementById("adminEmailLabel");
+const settingsForm = document.getElementById("settingsForm");
+const saveMessage = document.getElementById("saveMessage");
+
+function showLogin() {
+  loginView.hidden = false;
+  dashboardView.hidden = true;
+}
+
+function showDashboard(user) {
+  loginView.hidden = true;
+  dashboardView.hidden = false;
+  adminEmailLabel.textContent = user.email || "";
+  loadSettings();
+}
+
+function readableAuthError(error) {
+  const messages = {
+    "auth/invalid-credential": "البريد الإلكتروني أو كلمة السر غير صحيحة.",
+    "auth/user-not-found": "المستخدم غير موجود في Firebase Authentication.",
+    "auth/wrong-password": "كلمة السر غير صحيحة.",
+    "auth/invalid-email": "صيغة البريد الإلكتروني غير صحيحة.",
+    "auth/operation-not-allowed": "فعّل Email/Password من Authentication ثم Sign-in method.",
+    "auth/too-many-requests": "تمت محاولات كثيرة. انتظر قليلًا ثم أعد المحاولة.",
+    "auth/network-request-failed": "مشكلة في الاتصال بالإنترنت."
+  };
+  return messages[error?.code] || `حدث خطأ: ${error?.code || error?.message}`;
+}
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  loginMessage.textContent = "";
+  loginButton.disabled = true;
+  loginButton.textContent = "جارٍ الدخول...";
+
+  const email = document.getElementById("email").value.trim().toLowerCase();
+  const password = document.getElementById("password").value;
+
+  try {
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    if ((credential.user.email || "").toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+      await signOut(auth);
+      throw new Error("هذا الحساب غير مصرح له بالدخول إلى الإدارة.");
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    loginMessage.textContent = error.message === "هذا الحساب غير مصرح له بالدخول إلى الإدارة."
+      ? error.message
+      : readableAuthError(error);
+  } finally {
+    loginButton.disabled = false;
+    loginButton.textContent = "تسجيل الدخول";
+  }
+});
+
+logoutButton.addEventListener("click", () => signOut(auth));
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return showLogin();
+  if ((user.email || "").toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    await signOut(auth);
+    return showLogin();
+  }
+  showDashboard(user);
+});
+
+async function loadSettings() {
+  saveMessage.textContent = "جارٍ تحميل البيانات...";
+  try {
+    const snapshot = await getDoc(doc(db, "site", "settings"));
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      ["siteName", "phone", "whatsapp", "factoryAddress", "facebook", "instagram", "tiktok", "youtube"].forEach((id) => {
+        document.getElementById(id).value = data[id] || "";
+      });
+    }
+    saveMessage.textContent = "";
+  } catch (error) {
+    console.error("Load settings error:", error);
+    saveMessage.textContent = "تعذر تحميل البيانات. راجع Firestore Rules.";
+  }
+}
+
+settingsForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  saveMessage.textContent = "جارٍ الحفظ...";
+
+  const data = {};
+  ["siteName", "phone", "whatsapp", "factoryAddress", "facebook", "instagram", "tiktok", "youtube"].forEach((id) => {
+    data[id] = document.getElementById(id).value.trim();
+  });
+  data.updatedAt = serverTimestamp();
+
+  try {
+    await setDoc(doc(db, "site", "settings"), data, { merge: true });
+    saveMessage.textContent = "تم حفظ البيانات بنجاح.";
+  } catch (error) {
+    console.error("Save settings error:", error);
+    saveMessage.textContent = "فشل الحفظ. راجع Firestore Rules.";
+  }
+});
