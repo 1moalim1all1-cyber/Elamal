@@ -1,112 +1,53 @@
-import { auth, db } from "./firebase-config.js";
-import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
-import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+import {auth,db,storage} from "./firebase-config.js";
+import {signInWithEmailAndPassword,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+import {collection,getDocs,doc,getDoc,setDoc,addDoc,updateDoc,deleteDoc,serverTimestamp,query,orderBy} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+import {ref,uploadBytes,getDownloadURL,deleteObject} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-storage.js";
 
-const ADMIN_EMAIL = "admin@alamal.com";
-const loginView = document.getElementById("loginView");
-const dashboardView = document.getElementById("dashboardView");
-const loginForm = document.getElementById("loginForm");
-const loginButton = document.getElementById("loginButton");
-const loginMessage = document.getElementById("loginMessage");
-const logoutButton = document.getElementById("logoutButton");
-const adminEmailLabel = document.getElementById("adminEmailLabel");
-const settingsForm = document.getElementById("settingsForm");
-const saveMessage = document.getElementById("saveMessage");
+const ADMIN_EMAIL="admin@alamal.com";
+const $=id=>document.getElementById(id);
+let products=[],projects=[],testimonials=[];
 
-function showLogin() {
-  loginView.hidden = false;
-  dashboardView.hidden = true;
+function toast(msg,error=false){const el=$("toast");el.textContent=msg;el.className="toast"+(error?" error":"");el.hidden=false;setTimeout(()=>el.hidden=true,3200)}
+function errText(e){const m={"auth/invalid-credential":"البريد أو كلمة السر غير صحيحة.","auth/operation-not-allowed":"فعّل Email/Password في Firebase.","permission-denied":"لا توجد صلاحية. انشر قواعد Firestore وStorage."};return m[e.code]||e.message||"حدث خطأ غير متوقع."}
+function esc(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function imageTag(url){return url?`<img class="thumb" src="${esc(url)}" alt="">`:`<div class="thumb"></div>`}
+async function upload(file,folder){if(!file)return null;if(!file.type.startsWith("image/"))throw new Error("اختر ملف صورة فقط.");if(file.size>5*1024*1024)throw new Error("حجم الصورة يجب ألا يتجاوز 5MB.");const safe=file.name.replace(/[^\w.\-]/g,"_");const path=`${folder}/${Date.now()}-${safe}`;const r=ref(storage,path);await uploadBytes(r,file);return {url:await getDownloadURL(r),path}}
+async function removeStored(path){if(!path)return;try{await deleteObject(ref(storage,path))}catch(e){console.warn(e)}}
+function preview(inputId,imgId){$(inputId).addEventListener("change",e=>{const f=e.target.files[0],im=$(imgId);if(!f)return;im.src=URL.createObjectURL(f);im.classList.add("show")})}
+["heroImage","productImage","projectImage","testimonialImage"].forEach((x,i)=>preview(x,["heroImagePreview","productImagePreview","projectImagePreview","testimonialImagePreview"][i]));
+
+$("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("loginBtn").disabled=true;$("loginMessage").textContent="";try{const c=await signInWithEmailAndPassword(auth,$("loginEmail").value.trim(),$("loginPassword").value);if((c.user.email||"").toLowerCase()!==ADMIN_EMAIL){await signOut(auth);throw new Error("هذا الحساب غير مصرح له.")}}catch(x){$("loginMessage").textContent=errText(x)}finally{$("loginBtn").disabled=false}});
+$("logoutBtn").onclick=()=>signOut(auth);
+onAuthStateChanged(auth,u=>{if(u&&(u.email||"").toLowerCase()===ADMIN_EMAIL){$("loginScreen").hidden=true;$("adminApp").hidden=false;$("userEmail").textContent=u.email;loadAll()}else{$("loginScreen").hidden=false;$("adminApp").hidden=true}});
+
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));$(b.dataset.section).classList.add("active");$("pageTitle").textContent=b.textContent});
+document.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{$(b.dataset.open).hidden=false});
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>b.closest(".modal").hidden=true);
+$("refreshBtn").onclick=loadAll;
+
+async function readOrdered(name){try{return (await getDocs(query(collection(db,name),orderBy("updatedAt","desc")))).docs.map(d=>({id:d.id,...d.data()}))}catch{return (await getDocs(collection(db,name))).docs.map(d=>({id:d.id,...d.data()}))}
 }
+async function loadAll(){try{[products,projects,testimonials]=await Promise.all([readOrdered("products"),readOrdered("projects"),readOrdered("testimonials")]);renderProducts();renderProjects();renderTestimonials();await Promise.all([loadHomepage(),loadSettings()]);$("productsCount").textContent=products.length;$("projectsCount").textContent=projects.length;$("testimonialsCount").textContent=testimonials.length;$("visibleProductsCount").textContent=products.filter(x=>x.visible!==false).length}catch(e){toast(errText(e),true)}}
 
-function showDashboard(user) {
-  loginView.hidden = true;
-  dashboardView.hidden = false;
-  adminEmailLabel.textContent = user.email || "";
-  loadSettings();
-}
+async function loadHomepage(){const s=await getDoc(doc(db,"site","homepage"));if(!s.exists())return;const d=s.data();["heroTitle","heroEyebrow","heroDescription","primaryButtonText","primaryButtonUrl","secondaryButtonText","secondaryButtonUrl","aboutTitle","aboutText","vision","mission","productsSectionTitle"].forEach(k=>$(k).value=d[k]||"");if(d.heroImageUrl){$("heroImagePreview").src=d.heroImageUrl;$("heroImagePreview").classList.add("show");$("heroImagePreview").dataset.path=d.heroImagePath||""}}
+$("homepageForm").onsubmit=async e=>{e.preventDefault();const f=$("heroImage").files[0];try{e.target.classList.add("loading");let image={url:$("heroImagePreview").src||"",path:$("heroImagePreview").dataset.path||""};if(f){const old=image.path;image=await upload(f,"homepage");await removeStored(old)}const data={};["heroTitle","heroEyebrow","heroDescription","primaryButtonText","primaryButtonUrl","secondaryButtonText","secondaryButtonUrl","aboutTitle","aboutText","vision","mission","productsSectionTitle"].forEach(k=>data[k]=$(k).value.trim());Object.assign(data,{heroImageUrl:image.url,heroImagePath:image.path,updatedAt:serverTimestamp()});await setDoc(doc(db,"site","homepage"),data,{merge:true});$("homepageStatus").textContent="تم الحفظ بنجاح";toast("تم حفظ الصفحة الرئيسية")}catch(x){toast(errText(x),true)}finally{e.target.classList.remove("loading")}};
 
-function readableAuthError(error) {
-  const messages = {
-    "auth/invalid-credential": "البريد الإلكتروني أو كلمة السر غير صحيحة.",
-    "auth/user-not-found": "المستخدم غير موجود في Firebase Authentication.",
-    "auth/wrong-password": "كلمة السر غير صحيحة.",
-    "auth/invalid-email": "صيغة البريد الإلكتروني غير صحيحة.",
-    "auth/operation-not-allowed": "فعّل Email/Password من Authentication ثم Sign-in method.",
-    "auth/too-many-requests": "تمت محاولات كثيرة. انتظر قليلًا ثم أعد المحاولة.",
-    "auth/network-request-failed": "مشكلة في الاتصال بالإنترنت."
-  };
-  return messages[error?.code] || `حدث خطأ: ${error?.code || error?.message}`;
-}
+async function loadSettings(){const s=await getDoc(doc(db,"site","settings"));if(!s.exists())return;const d=s.data();["siteName","contactEmail","phone","whatsapp","factoryAddress","factoryMapUrl","workingHours","facebook","instagram","tiktok","youtube","linkedin","metaTitle","metaDescription","keywords","googleAnalytics","facebookPixel"].forEach(k=>$(k).value=d[k]||"")}
+$("settingsForm").onsubmit=async e=>{e.preventDefault();try{e.target.classList.add("loading");const data={};["siteName","contactEmail","phone","whatsapp","factoryAddress","factoryMapUrl","workingHours","facebook","instagram","tiktok","youtube","linkedin","metaTitle","metaDescription","keywords","googleAnalytics","facebookPixel"].forEach(k=>data[k]=$(k).value.trim());data.updatedAt=serverTimestamp();await setDoc(doc(db,"site","settings"),data,{merge:true});$("settingsStatus").textContent="تم الحفظ بنجاح";toast("تم حفظ الإعدادات")}catch(x){toast(errText(x),true)}finally{e.target.classList.remove("loading")}};
 
-loginForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  loginMessage.textContent = "";
-  loginButton.disabled = true;
-  loginButton.textContent = "جارٍ الدخول...";
+function renderProducts(){$("productsTable").innerHTML=products.map(x=>`<tr><td>${imageTag(x.imageUrl)}</td><td>${esc(x.name)}</td><td>${esc(x.category)}</td><td>${esc(x.size||"-")}</td><td><span class="badge ${x.visible===false?"off":""}">${x.visible===false?"مخفي":"ظاهر"}</span></td><td><div class="actions"><button class="btn btn-light btn-small" onclick="editProduct('${x.id}')">تعديل</button><button class="btn btn-danger btn-small" onclick="deleteProduct('${x.id}')">حذف</button></div></td></tr>`).join("")||`<tr><td colspan="6">لا توجد منتجات حتى الآن.</td></tr>`}
+window.editProduct=id=>{const x=products.find(v=>v.id===id);$("productForm").reset();$("productId").value=x.id;$("productName").value=x.name||"";$("productCategory").value=x.category||"دهانات داخلية";$("productColor").value=x.color||"#1769d2";$("productSize").value=x.size||"";$("productDescription").value=x.description||"";$("productFeatures").value=(x.features||[]).join("\n");$("productUsage").value=x.usage||"";$("productSpecs").value=x.specs||"";$("productVisible").value=String(x.visible!==false);const im=$("productImagePreview");im.src=x.imageUrl||"";im.dataset.path=x.imagePath||"";im.classList.toggle("show",!!x.imageUrl);$("productModal").hidden=false};
+window.deleteProduct=async id=>{if(!confirm("هل تريد حذف المنتج نهائيًا؟"))return;const x=products.find(v=>v.id===id);try{await deleteDoc(doc(db,"products",id));await removeStored(x?.imagePath);toast("تم حذف المنتج");loadAll()}catch(e){toast(errText(e),true)}};
+$("productForm").onsubmit=async e=>{e.preventDefault();try{e.target.classList.add("loading");const id=$("productId").value,old=products.find(v=>v.id===id);let image={url:old?.imageUrl||"",path:old?.imagePath||""};const f=$("productImage").files[0];if(f){const oldPath=image.path;image=await upload(f,"products");await removeStored(oldPath)}const data={name:$("productName").value.trim(),category:$("productCategory").value,color:$("productColor").value,size:$("productSize").value.trim(),description:$("productDescription").value.trim(),features:$("productFeatures").value.split("\n").map(x=>x.trim()).filter(Boolean),usage:$("productUsage").value.trim(),specs:$("productSpecs").value.trim(),visible:$("productVisible").value==="true",imageUrl:image.url,imagePath:image.path,updatedAt:serverTimestamp()};if(id)await updateDoc(doc(db,"products",id),data);else{data.createdAt=serverTimestamp();await addDoc(collection(db,"products"),data)}$("productModal").hidden=true;toast("تم حفظ المنتج");loadAll()}catch(x){toast(errText(x),true)}finally{e.target.classList.remove("loading")}};
 
-  const email = document.getElementById("email").value.trim().toLowerCase();
-  const password = document.getElementById("password").value;
+function renderProjects(){$("projectsTable").innerHTML=projects.map(x=>`<tr><td>${imageTag(x.imageUrl)}</td><td>${esc(x.name)}</td><td>${esc(x.governorate||"-")}</td><td>${esc(x.client||"-")}</td><td>${esc(x.date||"-")}</td><td><div class="actions"><button class="btn btn-light btn-small" onclick="editProject('${x.id}')">تعديل</button><button class="btn btn-danger btn-small" onclick="deleteProject('${x.id}')">حذف</button></div></td></tr>`).join("")||`<tr><td colspan="6">لا توجد مشروعات حتى الآن.</td></tr>`}
+window.editProject=id=>{const x=projects.find(v=>v.id===id);$("projectForm").reset();$("projectId").value=id;$("projectName").value=x.name||"";$("projectGovernorate").value=x.governorate||"";$("projectClient").value=x.client||"";$("projectDate").value=x.date||"";$("projectDescription").value=x.description||"";const im=$("projectImagePreview");im.src=x.imageUrl||"";im.dataset.path=x.imagePath||"";im.classList.toggle("show",!!x.imageUrl);$("projectModal").hidden=false};
+window.deleteProject=async id=>{if(!confirm("هل تريد حذف المشروع؟"))return;const x=projects.find(v=>v.id===id);try{await deleteDoc(doc(db,"projects",id));await removeStored(x?.imagePath);toast("تم حذف المشروع");loadAll()}catch(e){toast(errText(e),true)}};
+$("projectForm").onsubmit=async e=>{e.preventDefault();try{e.target.classList.add("loading");const id=$("projectId").value,old=projects.find(v=>v.id===id);let image={url:old?.imageUrl||"",path:old?.imagePath||""};const f=$("projectImage").files[0];if(f){const oldPath=image.path;image=await upload(f,"projects");await removeStored(oldPath)}const data={name:$("projectName").value.trim(),governorate:$("projectGovernorate").value.trim(),client:$("projectClient").value.trim(),date:$("projectDate").value,description:$("projectDescription").value.trim(),imageUrl:image.url,imagePath:image.path,updatedAt:serverTimestamp()};if(id)await updateDoc(doc(db,"projects",id),data);else{data.createdAt=serverTimestamp();await addDoc(collection(db,"projects"),data)}$("projectModal").hidden=true;toast("تم حفظ المشروع");loadAll()}catch(x){toast(errText(x),true)}finally{e.target.classList.remove("loading")}};
 
-  try {
-    const credential = await signInWithEmailAndPassword(auth, email, password);
-    if ((credential.user.email || "").toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-      await signOut(auth);
-      throw new Error("هذا الحساب غير مصرح له بالدخول إلى الإدارة.");
-    }
-  } catch (error) {
-    console.error("Login error:", error);
-    loginMessage.textContent = error.message === "هذا الحساب غير مصرح له بالدخول إلى الإدارة."
-      ? error.message
-      : readableAuthError(error);
-  } finally {
-    loginButton.disabled = false;
-    loginButton.textContent = "تسجيل الدخول";
-  }
-});
+function renderTestimonials(){$("testimonialsTable").innerHTML=testimonials.map(x=>`<tr><td>${imageTag(x.imageUrl)}</td><td>${esc(x.name)}</td><td>${esc(x.job||"-")}</td><td>${"★".repeat(Number(x.rating||5))}</td><td>${esc((x.text||"").slice(0,80))}</td><td><div class="actions"><button class="btn btn-light btn-small" onclick="editTestimonial('${x.id}')">تعديل</button><button class="btn btn-danger btn-small" onclick="deleteTestimonial('${x.id}')">حذف</button></div></td></tr>`).join("")||`<tr><td colspan="6">لا توجد آراء حتى الآن.</td></tr>`}
+window.editTestimonial=id=>{const x=testimonials.find(v=>v.id===id);$("testimonialForm").reset();$("testimonialId").value=id;$("testimonialName").value=x.name||"";$("testimonialJob").value=x.job||"";$("testimonialRating").value=String(x.rating||5);$("testimonialText").value=x.text||"";const im=$("testimonialImagePreview");im.src=x.imageUrl||"";im.dataset.path=x.imagePath||"";im.classList.toggle("show",!!x.imageUrl);$("testimonialModal").hidden=false};
+window.deleteTestimonial=async id=>{if(!confirm("هل تريد حذف رأي العميل؟"))return;const x=testimonials.find(v=>v.id===id);try{await deleteDoc(doc(db,"testimonials",id));await removeStored(x?.imagePath);toast("تم حذف الرأي");loadAll()}catch(e){toast(errText(e),true)}};
+$("testimonialForm").onsubmit=async e=>{e.preventDefault();try{e.target.classList.add("loading");const id=$("testimonialId").value,old=testimonials.find(v=>v.id===id);let image={url:old?.imageUrl||"",path:old?.imagePath||""};const f=$("testimonialImage").files[0];if(f){const oldPath=image.path;image=await upload(f,"testimonials");await removeStored(oldPath)}const data={name:$("testimonialName").value.trim(),job:$("testimonialJob").value.trim(),rating:Number($("testimonialRating").value),text:$("testimonialText").value.trim(),imageUrl:image.url,imagePath:image.path,updatedAt:serverTimestamp()};if(id)await updateDoc(doc(db,"testimonials",id),data);else{data.createdAt=serverTimestamp();await addDoc(collection(db,"testimonials"),data)}$("testimonialModal").hidden=true;toast("تم حفظ رأي العميل");loadAll()}catch(x){toast(errText(x),true)}finally{e.target.classList.remove("loading")}};
 
-logoutButton.addEventListener("click", () => signOut(auth));
-
-onAuthStateChanged(auth, async (user) => {
-  if (!user) return showLogin();
-  if ((user.email || "").toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-    await signOut(auth);
-    return showLogin();
-  }
-  showDashboard(user);
-});
-
-async function loadSettings() {
-  saveMessage.textContent = "جارٍ تحميل البيانات...";
-  try {
-    const snapshot = await getDoc(doc(db, "site", "settings"));
-    if (snapshot.exists()) {
-      const data = snapshot.data();
-      ["siteName", "phone", "whatsapp", "factoryAddress", "facebook", "instagram", "tiktok", "youtube"].forEach((id) => {
-        document.getElementById(id).value = data[id] || "";
-      });
-    }
-    saveMessage.textContent = "";
-  } catch (error) {
-    console.error("Load settings error:", error);
-    saveMessage.textContent = "تعذر تحميل البيانات. راجع Firestore Rules.";
-  }
-}
-
-settingsForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  saveMessage.textContent = "جارٍ الحفظ...";
-
-  const data = {};
-  ["siteName", "phone", "whatsapp", "factoryAddress", "facebook", "instagram", "tiktok", "youtube"].forEach((id) => {
-    data[id] = document.getElementById(id).value.trim();
-  });
-  data.updatedAt = serverTimestamp();
-
-  try {
-    await setDoc(doc(db, "site", "settings"), data, { merge: true });
-    saveMessage.textContent = "تم حفظ البيانات بنجاح.";
-  } catch (error) {
-    console.error("Save settings error:", error);
-    saveMessage.textContent = "فشل الحفظ. راجع Firestore Rules.";
-  }
-});
+document.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>{const form=$(b.dataset.open).querySelector("form");if(form){form.reset();form.querySelector('input[type="hidden"]')?.setAttribute("value","");form.querySelectorAll(".preview").forEach(i=>{i.src="";i.dataset.path="";i.classList.remove("show")})}}));

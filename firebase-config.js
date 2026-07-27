@@ -3,7 +3,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-aut
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-storage.js";
 
-export const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyAJTOIvwirrWrli24x07PCyGKqG5LJAPJE",
   authDomain: "alamal-86bd1.firebaseapp.com",
   projectId: "alamal-86bd1",
