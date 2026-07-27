@@ -1,4 +1,4 @@
- import { firebaseConfig, firebaseEnabled } from './firebase-config.js';
+    import { firebaseConfig, firebaseEnabled } from './firebase-config.js';
     import { defaultContent } from './default-content.js';
     let data=structuredClone(defaultContent), auth,db,storage,user,fb={};
     const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
