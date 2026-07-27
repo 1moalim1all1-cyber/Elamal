@@ -1,145 +1,22 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><title>لوحة إدارة الأمل للدهانات</title>
-<link rel="stylesheet" href="./admin.css">
-</head>
-<body>
-<section id="loginScreen" class="login-screen">
-  <div class="login-card"><div class="logo">أ</div><h1>لوحة إدارة الأمل للدهانات</h1>
-  <p class="sub">تحكم في الصفحة الرئيسية والمنتجات والمشروعات وآراء العملاء وبيانات التواصل.</p>
-  <form id="loginForm">
-    <div class="field"><label>البريد الإلكتروني</label><input id="loginEmail" type="email" value="admin@alamal.com" autocomplete="username" required></div>
-    <div class="field"><label>كلمة السر</label><input id="loginPassword" type="password" autocomplete="current-password" minlength="6" required></div>
-    <button id="loginBtn" class="btn btn-primary wide">تسجيل الدخول</button><p id="loginMessage" class="message"></p>
-  </form></div>
-</section>
-
-<div id="adminApp" class="app" hidden>
-<aside class="sidebar">
- <div class="side-brand"><div class="mini-logo">أ</div><div><h2>الأمل للدهانات</h2><small>لوحة التحكم</small></div></div>
- <nav class="nav">
-  <button class="active" data-section="dashboard">الرئيسية</button>
-  <button data-section="homepage">الصفحة الرئيسية</button>
-  <button data-section="products">المنتجات</button>
-  <button data-section="projects">المشروعات</button>
-  <button data-section="testimonials">آراء العملاء</button>
-  <button data-section="settings">الإعدادات والتواصل</button>
- </nav>
- <div class="side-bottom"><button id="logoutBtn" class="btn btn-light wide">تسجيل الخروج</button></div>
-</aside>
-<main class="main">
-<header class="topbar"><div><h1 id="pageTitle">الرئيسية</h1><div class="user">الحساب: <span id="userEmail"></span></div></div><button id="refreshBtn" class="btn btn-light">تحديث البيانات</button></header>
-<div class="content">
-
-<section id="dashboard" class="section active">
- <div class="section-head"><div><h2>نظرة عامة</h2><p>ملخص محتوى الموقع.</p></div></div>
- <div class="stats">
-  <div class="stat"><span>المنتجات</span><strong id="productsCount">0</strong></div>
-  <div class="stat"><span>المشروعات</span><strong id="projectsCount">0</strong></div>
-  <div class="stat"><span>آراء العملاء</span><strong id="testimonialsCount">0</strong></div>
-  <div class="stat"><span>المنتجات الظاهرة</span><strong id="visibleProductsCount">0</strong></div>
- </div>
-</section>
-
-<section id="homepage" class="section">
- <div class="section-head"><div><h2>إدارة الصفحة الرئيسية</h2><p>تعديل النصوص والصور الرئيسية.</p></div></div>
- <form id="homepageForm" class="card grid2">
-  <div class="field"><label>العنوان الرئيسي</label><input id="heroTitle"></div>
-  <div class="field"><label>النص الصغير أعلى العنوان</label><input id="heroEyebrow"></div>
-  <div class="field full"><label>وصف الهيرو</label><textarea id="heroDescription"></textarea></div>
-  <div class="field"><label>نص الزر الأول</label><input id="primaryButtonText"></div>
-  <div class="field"><label>رابط الزر الأول</label><input id="primaryButtonUrl"></div>
-  <div class="field"><label>نص الزر الثاني</label><input id="secondaryButtonText"></div>
-  <div class="field"><label>رابط الزر الثاني</label><input id="secondaryButtonUrl"></div>
-  <div class="field"><label>عنوان من نحن</label><input id="aboutTitle"></div>
-  <div class="field"><label>عنوان قسم المنتجات</label><input id="productsSectionTitle"></div>
-  <div class="field full"><label>نص من نحن</label><textarea id="aboutText"></textarea></div>
-  <div class="field"><label>الرؤية</label><textarea id="vision"></textarea></div>
-  <div class="field"><label>الرسالة</label><textarea id="mission"></textarea></div>
-  <div class="field full"><label>صورة البانر</label><input id="heroImage" type="file" accept="image/*"><small class="upload-note">اتركها فارغة للاحتفاظ بالصورة الحالية.</small><img id="heroImagePreview" class="preview"></div>
-  <div class="form-actions full"><button class="btn btn-primary">حفظ الصفحة الرئيسية</button><span id="homepageStatus" class="status"></span></div>
- </form>
-</section>
-
-<section id="products" class="section">
- <div class="section-head"><div><h2>المنتجات</h2><p>إضافة وتعديل وحذف منتجات الدهانات.</p></div><button class="btn btn-primary" data-open="productModal">إضافة منتج</button></div>
- <div class="card table-wrap"><table class="data-table"><thead><tr><th>الصورة</th><th>الاسم</th><th>التصنيف</th><th>الحجم</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody id="productsTable"></tbody></table></div>
-</section>
-
-<section id="projects" class="section">
- <div class="section-head"><div><h2>المشروعات</h2><p>إدارة سابقة الأعمال.</p></div><button class="btn btn-primary" data-open="projectModal">إضافة مشروع</button></div>
- <div class="card table-wrap"><table class="data-table"><thead><tr><th>الصورة</th><th>المشروع</th><th>المحافظة</th><th>العميل</th><th>التاريخ</th><th>الإجراءات</th></tr></thead><tbody id="projectsTable"></tbody></table></div>
-</section>
-
-<section id="testimonials" class="section">
- <div class="section-head"><div><h2>آراء العملاء</h2><p>إدارة تقييمات وآراء العملاء.</p></div><button class="btn btn-primary" data-open="testimonialModal">إضافة رأي</button></div>
- <div class="card table-wrap"><table class="data-table"><thead><tr><th>الصورة</th><th>الاسم</th><th>الوظيفة</th><th>التقييم</th><th>الرأي</th><th>الإجراءات</th></tr></thead><tbody id="testimonialsTable"></tbody></table></div>
-</section>
-
-<section id="settings" class="section">
- <div class="section-head"><div><h2>الإعدادات والتواصل</h2><p>بيانات المصنع والسوشيال ومحركات البحث.</p></div></div>
- <form id="settingsForm" class="card grid2">
-  <div class="field"><label>اسم الموقع</label><input id="siteName"></div>
-  <div class="field"><label>البريد الإلكتروني</label><input id="contactEmail" type="email"></div>
-  <div class="field"><label>رقم الهاتف</label><input id="phone"></div>
-  <div class="field"><label>رابط واتساب</label><input id="whatsapp" type="url"></div>
-  <div class="field full"><label>عنوان المصنع</label><input id="factoryAddress"></div>
-  <div class="field full"><label>رابط Google Maps</label><input id="factoryMapUrl" type="url"></div>
-  <div class="field"><label>ساعات العمل</label><input id="workingHours"></div>
-  <div class="field"><label>فيسبوك</label><input id="facebook" type="url"></div>
-  <div class="field"><label>إنستجرام</label><input id="instagram" type="url"></div>
-  <div class="field"><label>تيك توك</label><input id="tiktok" type="url"></div>
-  <div class="field"><label>يوتيوب</label><input id="youtube" type="url"></div>
-  <div class="field"><label>لينكدإن</label><input id="linkedin" type="url"></div>
-  <div class="field"><label>Meta Title</label><input id="metaTitle"></div>
-  <div class="field full"><label>Meta Description</label><textarea id="metaDescription"></textarea></div>
-  <div class="field full"><label>الكلمات المفتاحية</label><input id="keywords"></div>
-  <div class="field"><label>Google Analytics ID</label><input id="googleAnalytics"></div>
-  <div class="field"><label>Facebook Pixel ID</label><input id="facebookPixel"></div>
-  <div class="form-actions full"><button class="btn btn-primary">حفظ الإعدادات</button><span id="settingsStatus" class="status"></span></div>
- </form>
-</section>
-
-</div></main></div>
-
-<div id="productModal" class="modal" hidden><div class="modal-box"><div class="modal-head"><h3>بيانات المنتج</h3><button class="close" data-close>×</button></div>
-<form id="productForm" class="grid2"><input id="productId" type="hidden">
-<div class="field"><label>اسم المنتج</label><input id="productName" required></div>
-<div class="field"><label>التصنيف</label><select id="productCategory" required><option>دهانات داخلية</option><option>دهانات خارجية</option><option>دهانات ديكورية</option><option>معجون</option><option>برايمر</option><option>عوازل</option><option>منتجات أخرى</option></select></div>
-<div class="field"><label>اللون</label><input id="productColor" type="color" value="#1769d2"></div>
-<div class="field"><label>الحجم</label><input id="productSize" placeholder="20 كجم"></div>
-<div class="field full"><label>الوصف</label><textarea id="productDescription" required></textarea></div>
-<div class="field"><label>المميزات (كل ميزة في سطر)</label><textarea id="productFeatures"></textarea></div>
-<div class="field"><label>طريقة الاستخدام</label><textarea id="productUsage"></textarea></div>
-<div class="field full"><label>المواصفات</label><textarea id="productSpecs"></textarea></div>
-<div class="field"><label>الحالة</label><select id="productVisible"><option value="true">ظاهر</option><option value="false">مخفي</option></select></div>
-<div class="field"><label>صورة المنتج</label><input id="productImage" type="file" accept="image/*"><img id="productImagePreview" class="preview"></div>
-<div class="form-actions full"><button class="btn btn-primary">حفظ المنتج</button><button type="button" class="btn btn-light" data-close>إلغاء</button></div>
-</form></div></div>
-
-<div id="projectModal" class="modal" hidden><div class="modal-box"><div class="modal-head"><h3>بيانات المشروع</h3><button class="close" data-close>×</button></div>
-<form id="projectForm" class="grid2"><input id="projectId" type="hidden">
-<div class="field"><label>اسم المشروع</label><input id="projectName" required></div>
-<div class="field"><label>المحافظة</label><input id="projectGovernorate"></div>
-<div class="field"><label>العميل</label><input id="projectClient"></div>
-<div class="field"><label>التاريخ</label><input id="projectDate" type="date"></div>
-<div class="field full"><label>الوصف</label><textarea id="projectDescription"></textarea></div>
-<div class="field full"><label>صورة المشروع</label><input id="projectImage" type="file" accept="image/*"><img id="projectImagePreview" class="preview"></div>
-<div class="form-actions full"><button class="btn btn-primary">حفظ المشروع</button><button type="button" class="btn btn-light" data-close>إلغاء</button></div>
-</form></div></div>
-
-<div id="testimonialModal" class="modal" hidden><div class="modal-box"><div class="modal-head"><h3>رأي العميل</h3><button class="close" data-close>×</button></div>
-<form id="testimonialForm" class="grid2"><input id="testimonialId" type="hidden">
-<div class="field"><label>اسم العميل</label><input id="testimonialName" required></div>
-<div class="field"><label>الوظيفة</label><input id="testimonialJob"></div>
-<div class="field"><label>التقييم</label><select id="testimonialRating"><option value="5">5 نجوم</option><option value="4">4 نجوم</option><option value="3">3 نجوم</option><option value="2">نجمتان</option><option value="1">نجمة</option></select></div>
-<div class="field"><label>صورة العميل</label><input id="testimonialImage" type="file" accept="image/*"><img id="testimonialImagePreview" class="preview"></div>
-<div class="field full"><label>الرأي</label><textarea id="testimonialText" required></textarea></div>
-<div class="form-actions full"><button class="btn btn-primary">حفظ الرأي</button><button type="button" class="btn btn-light" data-close>إلغاء</button></div>
-</form></div></div>
-
-<div id="toast" class="toast" hidden></div>
-<script type="module" src="./admin.js"></script>
-</body></html>
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>لوحة تحكم الأمل</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"><style>
+:root{--navy:#071a2f;--blue:#0d64d8;--orange:#ff6b18;--bg:#f3f6fa;--line:#dfe6ef}*{box-sizing:border-box}body{margin:0;font-family:Cairo;background:var(--bg);color:#132238}.login{min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#061426,#0d64d8)}.box{background:#fff;width:min(440px,calc(100% - 30px));padding:32px;border-radius:24px;box-shadow:0 30px 80px #0005}.box h1{margin:0 0 7px}.box p{color:#64748b}.field{margin:14px 0}.field label{display:block;font-weight:700;margin-bottom:7px}.field input,.field textarea,.field select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit}.btn{border:0;border-radius:11px;padding:12px 18px;font:inherit;font-weight:800;cursor:pointer;background:var(--blue);color:#fff}.btn.orange{background:var(--orange)}.btn.light{background:#e9eef5;color:#132238}.btn.danger{background:#c62828}.app{display:none}.side{position:fixed;right:0;top:0;bottom:0;width:260px;background:var(--navy);color:#fff;padding:25px 18px;overflow:auto}.side h2{font-size:20px}.side button{width:100%;text-align:right;margin:4px 0;background:transparent;color:#cbd8e8;border:0;padding:12px;border-radius:10px;font:inherit;cursor:pointer}.side button.active,.side button:hover{background:#ffffff18;color:#fff}.main{margin-right:260px;padding:28px}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.panel{display:none}.panel.active{display:block}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.full{grid-column:1/-1}.repeat{border:1px dashed #bcc8d7;border-radius:15px;padding:16px;margin:12px 0;background:#fafcff}.row-actions{display:flex;gap:8px;margin-top:10px}.notice{padding:12px;border-radius:10px;background:#fff7e8;color:#8a4b00;margin-bottom:16px}.ok{background:#e8fff1;color:#176b38}.preview{width:90px;height:70px;object-fit:cover;border-radius:8px;background:#eef2f7}.status{font-size:13px;color:#64748b}@media(max-width:800px){.side{position:static;width:auto}.main{margin:0;padding:16px}.grid{grid-template-columns:1fr}.topbar{align-items:flex-start;gap:12px;flex-direction:column}}
+</style><meta name="robots" content="noindex,nofollow,noarchive"><link rel="stylesheet" href="global-theme.css"></head><body>
+<section class="login" id="login"><form class="box" id="loginForm"><h1>لوحة تحكم الأمل</h1><p id="loginHint">سجل دخولك برقم الموبايل وكلمة السر.</p><div class="field"><label>رقم الموبايل</label><input id="email" type="tel" required inputmode="numeric" placeholder="01071908374"></div><div class="field"><label>كلمة السر</label><input id="password" type="password" required minlength="6"></div><button class="btn" type="submit">دخول</button><p class="status" id="loginStatus"></p></form></section>
+<div class="app" id="app"><aside class="side"><h2>الأمل للدهانات</h2><p class="status">إدارة محتوى الموقع</p><button class="tab active" data-panel="general">الإعدادات والتواصل</button><button class="tab" data-panel="hero">الواجهة الرئيسية</button><button class="tab" data-panel="about">عن الشركة</button><button class="tab" data-panel="products">المنتجات</button><button class="tab" data-panel="projects">المشروعات</button><button class="tab" data-panel="testimonials">آراء العملاء</button><button class="tab" data-panel="cta">الدعوة للتواصل</button><hr style="border-color:#ffffff22"><a href="index.html" target="_blank" style="display:block;padding:12px">فتح الموقع ↗</a><button id="logout">تسجيل الخروج</button></aside><main class="main"><div class="topbar"><div><h1 id="pageTitle">الإعدادات والتواصل</h1><div class="status" id="mode"></div></div><button class="btn orange" id="save">حفظ كل التعديلات</button></div><div id="message"></div>
+<section class="panel active" id="general"><div class="card grid"><div class="field"><label>اسم الموقع</label><input data-path="general.siteName"></div><div class="field"><label>رقم الهاتف</label><input data-path="general.phone"></div><div class="field"><label>البريد</label><input data-path="general.email"></div><div class="field"><label>واتساب بكود الدولة</label><input data-path="general.whatsapp"></div><div class="field full"><label>عنوان المصنع بالتفصيل</label><input data-path="general.address" placeholder="مثال: المنطقة الصناعية، مدينة ...، محافظة ..."></div>
+<div class="field full"><label>رابط موقع المصنع على Google Maps</label><input type="url" data-path="general.factoryMapUrl" placeholder="https://maps.app.goo.gl/..."><p class="status">افتح موقع المصنع في خرائط Google، اضغط مشاركة، ثم انسخ الرابط والصقه هنا.</p></div>
+<div class="field full"><h3 style="margin:8px 0 0">روابط التواصل الاجتماعي</h3><p class="status">اترك أي رابط فارغًا لإخفاء الأيقونة من الموقع.</p></div>
+<div class="field"><label>رابط فيسبوك</label><input type="url" data-path="general.facebook" placeholder="https://facebook.com/..."></div>
+<div class="field"><label>رابط إنستجرام</label><input type="url" data-path="general.instagram" placeholder="https://instagram.com/..."></div>
+<div class="field"><label>رابط تيك توك</label><input type="url" data-path="general.tiktok" placeholder="https://tiktok.com/@..."></div>
+<div class="field"><label>رابط يوتيوب</label><input type="url" data-path="general.youtube" placeholder="https://youtube.com/@..."></div>
+<div class="field"><label>رابط لينكدإن</label><input type="url" data-path="general.linkedin" placeholder="https://linkedin.com/..."></div>
+<div class="field"><label>رابط واتساب</label><input type="url" data-path="general.whatsappUrl" placeholder="https://wa.me/201071908374"></div>
+</div></section>
+<section class="panel" id="hero"><div class="card grid"><div class="field full"><label>الجملة الصغيرة</label><input data-path="hero.badge"></div><div class="field full"><label>العنوان الرئيسي (يسمح بـ &lt;span&gt; و &lt;br&gt;)</label><textarea rows="3" data-path="hero.title"></textarea></div><div class="field full"><label>النص</label><textarea rows="4" data-path="hero.text"></textarea></div></div></section>
+<section class="panel" id="about"><div class="card grid"><div class="field full"><label>العنوان</label><input data-path="about.title"></div><div class="field full"><label>النص</label><textarea rows="5" data-path="about.text"></textarea></div><div class="field"><label>صورة القسم</label><input type="file" accept="image/*" data-upload="about.image"><input data-path="about.image" placeholder="رابط الصورة"></div></div></section>
+<section class="panel" id="products"><div class="notice ok">من هنا تقدر تضيف صنف جديد، تختار القسم، تحدد اللون، وترفع صورة. بعد الحفظ هيظهر الصنف تلقائيًا في صفحة المنتجات داخل القسم المختار.</div><div id="productsList"></div><button class="btn light" data-add="products">+ إضافة صنف جديد</button></section>
+<section class="panel" id="projects"><div id="projectsList"></div><button class="btn light" data-add="projects">+ إضافة مشروع</button></section>
+<section class="panel" id="testimonials"><div id="testimonialsList"></div><button class="btn light" data-add="testimonials">+ إضافة رأي</button></section>
+<section class="panel" id="cta"><div class="card grid"><div class="field full"><label>العنوان</label><input data-path="cta.title"></div><div class="field full"><label>النص</label><textarea rows="3" data-path="cta.text"></textarea></div></div></section>
+</main></div><script type="module" src="admin.js"></script></body></html>
