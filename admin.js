@@ -316,6 +316,12 @@ async function save() {
   collect();
   collectLists();
 
+  const saveButton = $('#save');
+  const originalText = saveButton.textContent;
+
+  saveButton.disabled = true;
+  saveButton.textContent = 'جاري الحفظ...';
+
   $('#message').innerHTML =
     '<div class="notice">جاري حفظ التعديلات...</div>';
 
@@ -323,7 +329,16 @@ async function save() {
     for (const element of $$('[data-upload]')) {
       if (!element.files?.[0]) continue;
 
-      const imageUrl = await upload(element.files[0]);
+      const imageUrl = await Promise.race([
+        upload(element.files[0]),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('انتهت مهلة رفع الصورة إلى Firebase Storage')),
+            30000
+          )
+        )
+      ]);
+
       pathSet(data, element.dataset.upload, imageUrl);
     }
 
@@ -333,31 +348,89 @@ async function save() {
       const [type, index, key] =
         element.dataset.itemUpload.split('.');
 
-      data[type][Number(index)][key] =
-        await upload(element.files[0]);
+      data[type][Number(index)][key] = await Promise.race([
+        upload(element.files[0]),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error('انتهت مهلة رفع صورة العنصر')),
+            30000
+          )
+        )
+      ]);
     }
 
-    localStorage.setItem(
-      'alamalContent',
-      JSON.stringify(data)
-    );
+    // حفظ نسخة محلية دائمًا حتى لا تضيع التعديلات.
+    localStorage.setItem('alamalContent', JSON.stringify(data));
 
-    if (db) {
-      await fb.setDoc(
-        fb.doc(db, 'site', 'content'),
-        data
+    if (!db) {
+      $('#message').innerHTML =
+        '<div class="notice ok">تم الحفظ على هذا الجهاز فقط. Firebase غير متصل، لذلك لن تظهر التعديلات لباقي الزوار.</div>';
+      fill();
+      return;
+    }
+
+    if (!auth?.currentUser) {
+      throw Object.assign(
+        new Error('جلسة الأدمن غير موجودة. سجل الخروج ثم ادخل مرة أخرى.'),
+        { code: 'auth/not-signed-in' }
       );
     }
 
+    await Promise.race([
+      fb.setDoc(
+        fb.doc(db, 'site', 'content'),
+        data,
+        { merge: true }
+      ),
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(
+            Object.assign(
+              new Error('انتهت مهلة الحفظ في Firestore'),
+              { code: 'firestore/timeout' }
+            )
+          ),
+          20000
+        )
+      )
+    ]);
+
     $('#message').innerHTML =
-      '<div class="notice ok">تم حفظ التعديلات بنجاح. افتح الموقع أو حدّث الصفحة لرؤيتها.</div>';
+      '<div class="notice ok">تم حفظ التعديلات على الموقع بنجاح. حدّث الموقع بعد عدة ثوانٍ لرؤيتها.</div>';
 
     fill();
   } catch (error) {
-    console.error(error);
+    console.error('Save error:', error);
+
+    const messages = {
+      'permission-denied':
+        'Firebase رفض الحفظ. انشر قواعد Firestore التي تسمح للأدمن المسجل بالكتابة.',
+      'firestore/permission-denied':
+        'Firebase رفض الحفظ. انشر قواعد Firestore التي تسمح للأدمن المسجل بالكتابة.',
+      'auth/not-signed-in':
+        'انتهت جلسة الأدمن. سجل الخروج ثم ادخل مرة أخرى.',
+      'firestore/timeout':
+        'الحفظ على Firebase استغرق وقتًا طويلًا. تأكد من إنشاء قاعدة Firestore واتصال الإنترنت.',
+      'storage/unauthorized':
+        'Firebase Storage رفض رفع الصورة. انشر قواعد Storage الخاصة بالأدمن.',
+      'storage/object-not-found':
+        'تعذر العثور على مسار الصورة داخل Firebase Storage.',
+      'storage/retry-limit-exceeded':
+        'رفع الصورة فشل بسبب الاتصال. حاول مرة أخرى.'
+    };
+
+    const code = error.code || '';
+    const message =
+      messages[code] ||
+      messages[`firestore/${code}`] ||
+      error.message ||
+      'حدث خطأ غير معروف أثناء الحفظ.';
 
     $('#message').innerHTML =
-      `<div class="notice">تعذر الحفظ: ${escapeHtml(error.message)}</div>`;
+      `<div class="notice">تعذر الحفظ على الموقع: ${escapeHtml(message)}<br><small>تم الاحتفاظ بنسخة محلية على هذا الجهاز.</small></div>`;
+  } finally {
+    saveButton.disabled = false;
+    saveButton.textContent = originalText;
   }
 }
 
