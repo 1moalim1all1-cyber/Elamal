@@ -1,10 +1,14 @@
-// انسخ بيانات Firebase Web App هنا
-export const firebaseConfig = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+const firebaseConfig = {
+  apiKey: "AIzaSyAJTOIvwirrWrli24x07PCyGKqG5LJAPJE",
+  authDomain: "alamal-86bd1.firebaseapp.com",
+  projectId: "alamal-86bd1",
+  storageBucket: "alamal-86bd1.firebasestorage.app",
+  messagingSenderId: "487151122464",
+  appId: "1:487151122464:web:b3c8e416a9072bdf6e2445",
+  measurementId: "G-9YW4WXEJFJ"
 };
-export const firebaseEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
+const auth = firebase.auth();
