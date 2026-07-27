@@ -63,19 +63,21 @@ async function initFirebase() {
 
   try {
     const appModule = await import(
-      'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js'
+      'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js'
     );
     const authModule = await import(
-      'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js'
+      'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js'
     );
     const firestoreModule = await import(
-      'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js'
+      'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js'
     );
     const storageModule = await import(
-      'https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js'
+      'https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js'
     );
 
-    const app = appModule.initializeApp(firebaseConfig);
+    const app = appModule.getApps().length
+      ? appModule.getApp()
+      : appModule.initializeApp(firebaseConfig);
 
     auth = authModule.getAuth(app);
     db = firestoreModule.getFirestore(app);
@@ -210,9 +212,11 @@ function listHtml(type, fields) {
 
 function renderLists() {
   const categories = [
-    { value: 'دهانات داخلية', label: 'دهانات داخلية' },
-    { value: 'دهانات خارجية', label: 'دهانات خارجية' },
-    { value: 'دهانات ديكورية', label: 'دهانات ديكورية' }
+    { value: 'دهان داخلي', label: 'دهان داخلي' },
+    { value: 'دهان خارجي', label: 'دهان خارجي' },
+    { value: 'دهان ديكوري', label: 'دهان ديكوري' },
+    { value: 'معجون', label: 'معجون' },
+    { value: 'برايمر وتجهيز', label: 'برايمر وتجهيز' }
   ];
 
   $('#productsList').innerHTML = listHtml('products', [
@@ -383,7 +387,7 @@ function setupAddButtons() {
       if (type === 'products') {
         data.products.push({
           name: 'صنف جديد',
-          category: 'دهانات داخلية',
+          category: 'دهان داخلي',
           description: '',
           color: '#0d64d8',
           image: ''
@@ -489,8 +493,14 @@ function setupLogin() {
       );
     } catch (error) {
       console.error(error);
-      status.textContent =
-        `تعذر الدخول: ${error.message}`;
+      const messages = {
+        'auth/invalid-credential': 'البريد الإلكتروني أو كلمة السر غير صحيحة.',
+        'auth/user-not-found': 'حساب الأدمن غير موجود في Firebase Authentication.',
+        'auth/wrong-password': 'كلمة السر غير صحيحة.',
+        'auth/too-many-requests': 'محاولات كثيرة. انتظر قليلًا ثم جرّب مرة أخرى.',
+        'auth/network-request-failed': 'تعذر الاتصال بالإنترنت.'
+      };
+      status.textContent = messages[error.code] || `تعذر الدخول: ${error.message}`;
     }
   });
 }
@@ -528,7 +538,12 @@ async function start() {
 
   if (connected) {
     fb.onAuthStateChanged(auth, async (user) => {
-      if (!user) return;
+      if (!user) {
+        currentUser = null;
+        $('#app').style.display = 'none';
+        $('#login').style.display = 'grid';
+        return;
+      }
 
       currentUser = user;
       await loadContent();

@@ -3,12 +3,13 @@ import { defaultContent } from './default-content.js';
 
 async function getContent(){
   const local=localStorage.getItem('alamalContent');
-  let data=local?JSON.parse(local):defaultContent;
+  let data=defaultContent;
+  if(local){try{data={...defaultContent,...JSON.parse(local)}}catch(e){console.warn('Local content:',e)}}
   if(firebaseEnabled){
     try{
-      const {initializeApp}=await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js');
-      const {getFirestore,doc,getDoc}=await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js');
-      const app=initializeApp(firebaseConfig), db=getFirestore(app), snap=await getDoc(doc(db,'site','content'));
+      const {initializeApp,getApps,getApp}=await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js');
+      const {getFirestore,doc,getDoc}=await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js');
+      const app=getApps().length?getApp():initializeApp(firebaseConfig), db=getFirestore(app), snap=await getDoc(doc(db,'site','content'));
       if(snap.exists()) data={...defaultContent,...snap.data()};
     }catch(e){console.warn('Firebase:',e)}
   }
