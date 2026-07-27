@@ -1,4 +1,9 @@
-const firebaseConfig = {
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+export const firebaseConfig = {
   apiKey: "AIzaSyAJTOIvwirrWrli24x07PCyGKqG5LJAPJE",
   authDomain: "alamal-86bd1.firebaseapp.com",
   projectId: "alamal-86bd1",
@@ -8,7 +13,7 @@ const firebaseConfig = {
   measurementId: "G-9YW4WXEJFJ"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const storage = firebase.storage();
-const auth = firebase.auth();
+export const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export const auth = getAuth(app);
