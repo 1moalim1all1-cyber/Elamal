@@ -551,20 +551,61 @@ let ui = { panelOpen:false, activeTab:'settings' };
 const FIREBASE_COLLECTION = 'alamal_site';
 const FIREBASE_DOC = 'main';
 
+function mapSharedProducts(items){
+  const catMap={
+    'دهانات خارجية':'ext','دهان خارجي':'ext','خارجية':'ext',
+    'دهانات داخلية':'int','دهان داخلي':'int','داخلية':'int','معجون':'int',
+    'دهانات ديكورية':'dec','ديكور':'dec','ديكورية':'dec'
+  };
+  return (items||[]).map((p,i)=>({
+    id:p.id||('shared'+i), name:p.name||'صنف جديد', desc:p.description||p.desc||'',
+    cat:catMap[p.category]||p.cat||'int', color:p.color||'#0d64d8', image:p.image||''
+  }));
+}
 async function loadState(){
-  // 1) Firestore (real hosting, e.g. GitHub Pages)
+  // 1) المحتوى الموحد من لوحة الإدارة المخفية
+  if(db){
+    try{
+      const shared = await db.collection('site').doc('content').get();
+      if(shared.exists){
+        const d=shared.data();
+        if(d.products?.length) state.products=mapSharedProducts(d.products);
+        if(d.general){
+          state.settings.phone1=d.general.phone||state.settings.phone1;
+          state.settings.whatsapp=d.general.whatsapp||d.general.phone||state.settings.whatsapp;
+          state.settings.email=d.general.email||state.settings.email;
+          state.settings.address=d.general.address||state.settings.address;
+        }
+        return;
+      }
+    }catch(e){ console.warn('Shared content load failed:', e); }
+  }
+  const localShared=localStorage.getItem('alamalContent');
+  if(localShared){
+    try{
+      const d=JSON.parse(localShared);
+      if(d.products?.length) state.products=mapSharedProducts(d.products);
+      if(d.general){
+        state.settings.phone1=d.general.phone||state.settings.phone1;
+        state.settings.whatsapp=d.general.whatsapp||d.general.phone||state.settings.whatsapp;
+        state.settings.email=d.general.email||state.settings.email;
+        state.settings.address=d.general.address||state.settings.address;
+      }
+      return;
+    }catch(e){ console.warn('Local shared content load failed:',e); }
+  }
+  // 2) النظام القديم كاحتياط
   if(db){
     try{
       const doc = await db.collection(FIREBASE_COLLECTION).doc(FIREBASE_DOC).get();
       if(doc.exists){ state = doc.data(); return; }
     }catch(e){ console.warn('Firestore load failed:', e); }
   }
-  // 2) Claude artifact storage (preview inside claude.ai)
   if(window.storage){
     try{
       const r = await window.storage.get(STORAGE_KEY);
       if(r && r.value){ state = JSON.parse(r.value); }
-    }catch(e){ /* no saved state yet — keep defaults */ }
+    }catch(e){ }
   }
 }
 async function saveState(){
