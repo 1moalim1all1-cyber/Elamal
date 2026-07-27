@@ -1,5 +1,5 @@
 (async()=>{
- const fallback={phone:'01071908374',whatsapp:'201071908374',whatsappUrl:'https://wa.me/201071908374',facebook:'',instagram:'',tiktok:'',youtube:'',linkedin:''};
+ const fallback={phone:'01071908374',whatsapp:'201071908374',whatsappUrl:'https://wa.me/201071908374',facebook:'',instagram:'',tiktok:'',youtube:'',linkedin:'',address:'مصر',factoryMapUrl:''};
  let general={...fallback};
  try{
    const raw=localStorage.getItem('alamalContent');
@@ -26,5 +26,24 @@
    const box=document.createElement('div');box.className='social-links-managed';box.setAttribute('aria-label','روابط التواصل الاجتماعي');
    box.innerHTML=socials.map(([k,label,icon])=>`<a href="${String(general[k]).replace(/"/g,'&quot;')}" target="_blank" rel="noopener" aria-label="${label}" title="${label}">${icon}</a>`).join('');
    const footer=document.querySelector('footer');if(footer)footer.appendChild(box);else document.body.appendChild(box);
+ }
+
+ const address=String(general.address||'').trim();
+ const mapUrl=String(general.factoryMapUrl||'').trim();
+ document.querySelectorAll('[data-site="address"],#contactAddressText').forEach(e=>e.textContent=address);
+ if(mapUrl){
+   const addressCard=document.querySelector('#contactAddressText')?.closest('a,div.contact-card');
+   if(addressCard&&addressCard.tagName==='A'){addressCard.href=mapUrl;addressCard.target='_blank';addressCard.rel='noopener'}
+   document.querySelectorAll('#contactMapEmbed,#mapEmbed,.map-embed').forEach(box=>{
+     box.innerHTML='';
+     const iframe=document.createElement('iframe');
+     iframe.title='موقع مصنع الأمل للدهانات';iframe.loading='lazy';iframe.referrerPolicy='no-referrer-when-downgrade';iframe.allowFullscreen=true;
+     iframe.src=`https://www.google.com/maps?q=${encodeURIComponent(address||mapUrl)}&output=embed`;
+     iframe.style.cssText='width:100%;height:100%;min-height:280px;border:0';box.appendChild(iframe);
+   });
+   if(!document.querySelector('.factory-location-managed')){
+     const footer=document.querySelector('footer');
+     if(footer){const a=document.createElement('a');a.className='factory-location-managed';a.href=mapUrl;a.target='_blank';a.rel='noopener';a.innerHTML=`<span>📍</span><span><b>موقع المصنع</b><small>${address||'افتح الموقع على خرائط Google'}</small></span>`;footer.appendChild(a)}
+   }
  }
 })();

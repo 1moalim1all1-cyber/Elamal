@@ -100,3 +100,5 @@ footer a:hover{color:var(--brand-orange-2)!important}
 }
 
 .social-links-managed{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;padding:22px 15px}.social-links-managed a{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#0d64d8,#071a2f);color:#fff!important;font-weight:900;font-family:Arial,sans-serif;text-decoration:none;box-shadow:0 10px 25px rgba(0,0,0,.18);transition:.25s}.social-links-managed a:hover{transform:translateY(-4px) scale(1.06);background:linear-gradient(145deg,#ff6b18,#e44c00)}
+
+.factory-location-managed{display:flex;align-items:center;gap:12px;width:min(520px,calc(100% - 32px));margin:24px auto;padding:14px 18px;border:1px solid rgba(255,255,255,.18);border-radius:16px;background:rgba(255,255,255,.08);color:#fff;text-decoration:none;transition:.25s}.factory-location-managed:hover{transform:translateY(-3px);background:rgba(255,255,255,.13)}.factory-location-managed>span:first-child{font-size:28px}.factory-location-managed b,.factory-location-managed small{display:block}.factory-location-managed small{opacity:.76;margin-top:2px}

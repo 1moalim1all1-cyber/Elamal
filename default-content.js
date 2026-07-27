@@ -1,5 +1,5 @@
 export const defaultContent = {
-  general:{siteName:"الأمل للدهانات",phone:"01071908374",email:"info@alamal-paints.com",address:"مصر",whatsapp:"201071908374",whatsappUrl:"https://wa.me/201071908374",facebook:"",instagram:"",tiktok:"",youtube:"",linkedin:""},
+  general:{siteName:"الأمل للدهانات",phone:"01071908374",email:"info@alamal-paints.com",address:"مصر",factoryMapUrl:"",whatsapp:"201071908374",whatsappUrl:"https://wa.me/201071908374",facebook:"",instagram:"",tiktok:"",youtube:"",linkedin:""},
   hero:{badge:"حلول دهانات متكاملة لكل مساحة",title:"ألوان تصنع <span>الفرق</span><br>وجودة تعيش سنين",text:"من الدهانات الداخلية والخارجية إلى أحدث المؤثرات الديكورية، نقدم لك تشكيلة متكاملة تجمع بين قوة التغطية، ثبات اللون، وسهولة التطبيق.",primaryText:"اكتشف منتجاتنا",primaryLink:"products.html",secondaryText:"اختار لونك",secondaryLink:"catalog.html"},
   about:{title:"نصنع اللون الذي يحوّل المكان إلى حكاية",text:"نسعى لتقديم حلول دهانات عملية وعصرية تلائم المنازل والمشروعات، مع اهتمام بالتغطية الجيدة، المظهر النهائي الأنيق، والتنوع الذي يساعدك في الوصول إلى النتيجة التي تتخيلها.",image:"assets/cover.jpg"},
   cta:{title:"جاهز تغيّر شكل مساحتك؟",text:"تواصل معنا واختار المنتج واللون المناسب لمشروعك."},
