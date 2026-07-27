@@ -1,5 +1,5 @@
-import { firebaseConfig, firebaseEnabled } from './firebase-config.js';
-import { defaultContent } from './default-content.js';
+import { firebaseConfig, firebaseEnabled } from './firebase-config.js?v=20260728-3';
+import { defaultContent } from './default-content.js?v=20260728-3';
 
 async function getContent(){
   const local=localStorage.getItem('alamalContent');

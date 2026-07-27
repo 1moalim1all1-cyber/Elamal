@@ -7,7 +7,7 @@ export const defaultContent = {
     {name:"أمل بلاست 1000",category:"دهان داخلي",description:"دهان مائي مط بتغطية جيدة وتشطيب ناعم للاستخدام الداخلي.",color:"#0d64d8",image:""},
     {name:"أمل شيلد",category:"دهان خارجي",description:"طلاء خارجي عملي يساعد على حماية الواجهات وإظهارها بشكل أنيق.",color:"#ff711e",image:""},
     {name:"أمل فيلر",category:"معجون",description:"معجون جاهز لتسوية الأسطح وملء المسام قبل مراحل التشطيب.",color:"#12b8d0",image:""},
-    {name:"أمل كرييتف",category:"ديكور",description:"دهان ديكوري يمنح الحائط ملمسًا بصريًا حديثًا ولمسة فاخرة.",color:"#7f47c9",image:""}
+    {name:"أمل كرييتف",category:"دهان ديكوري",description:"دهان ديكوري يمنح الحائط ملمسًا بصريًا حديثًا ولمسة فاخرة.",color:"#7f47c9",image:""}
   ],
   projects:[
     {title:"واجهات عصرية",subtitle:"ألوان قوية وشخصية واضحة",image:"assets/cover.jpg"},
