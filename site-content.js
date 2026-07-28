@@ -1,15 +1,14 @@
-import { firebaseConfig, firebaseEnabled } from './firebase-config.js?v=20260728-3';
-import { defaultContent } from './default-content.js?v=20260728-3';
+import { firebaseConfig, firebaseEnabled } from './firebase-config.js';
+import { defaultContent } from './default-content.js';
 
 async function getContent(){
   const local=localStorage.getItem('alamalContent');
-  let data=defaultContent;
-  if(local){try{data={...defaultContent,...JSON.parse(local)}}catch(e){console.warn('Local content:',e)}}
+  let data=local?JSON.parse(local):defaultContent;
   if(firebaseEnabled){
     try{
-      const {initializeApp,getApps,getApp}=await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js');
-      const {getFirestore,doc,getDoc}=await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js');
-      const app=getApps().length?getApp():initializeApp(firebaseConfig), db=getFirestore(app), snap=await getDoc(doc(db,'site','content'));
+      const {initializeApp}=await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js');
+      const {getFirestore,doc,getDoc}=await import('https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js');
+      const app=initializeApp(firebaseConfig), db=getFirestore(app), snap=await getDoc(doc(db,'site','content'));
       if(snap.exists()) data={...defaultContent,...snap.data()};
     }catch(e){console.warn('Firebase:',e)}
   }
@@ -19,7 +18,6 @@ function esc(v=''){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt
 function render(d){
   const set=(id,v,html=false)=>{const e=document.getElementById(id);if(e)e[html?'innerHTML':'textContent']=v||''};
   set('heroBadge',d.hero?.badge);set('heroTitle',d.hero?.title,true);set('heroText',d.hero?.text);
-  const heroMainImage=document.getElementById('heroMainImage');if(heroMainImage&&d.hero?.image)heroMainImage.src=d.hero.image;
   set('aboutTitle',d.about?.title);set('aboutText',d.about?.text);set('ctaTitle',d.cta?.title);set('ctaText',d.cta?.text);
   document.querySelectorAll('[data-site="phone"]').forEach(e=>e.textContent=d.general?.phone||'');
   document.querySelectorAll('[data-site="email"]').forEach(e=>e.textContent=d.general?.email||'');
