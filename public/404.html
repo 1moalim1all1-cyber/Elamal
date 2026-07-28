@@ -11,7 +11,8 @@
       (تقنية معروفة: spa-github-pages)
     -->
     <script>
-      var segmentCount = 0; // 0 لأن الموقع هيتظبط على دومين مخصص من الجذر
+      var segmentCount = 1; // 1 لأن الموقع شغال تحت مسار فرعي: username.github.io/Elamal/
+                             // (رجّعها 0 لو ربطت دومين مخصص بعدين وبقى الموقع من الجذر)
       var l = window.location;
       l.replace(
         l.protocol + "//" + l.hostname + (l.port ? ":" + l.port : "") +
