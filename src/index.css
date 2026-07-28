@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer utilities {
+  .container-site {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
+  }
+
+  /* شريط عينات الألوان - العنصر البصري المميز للهوية */
+  .swatch-strip {
+    @apply flex h-3 w-full overflow-hidden rounded-full;
+  }
+  .swatch-strip > span {
+    @apply h-full flex-1;
+  }
+
+  /* حقول نماذج لوحة الإدارة */
+  .input {
+    @apply w-full rounded-xl border border-plaster-300 px-4 py-2.5 text-sm outline-none focus:border-petrol-500;
+  }
+}
+
+::selection {
+  background-color: theme("colors.amber.300");
+  color: theme("colors.ink.700");
+}
+
+:focus-visible {
+  outline: 3px solid theme("colors.amber.400");
+  outline-offset: 2px;
+}
