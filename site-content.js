@@ -18,7 +18,12 @@ function esc(v=''){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt
 function render(d){
   const set=(id,v,html=false)=>{const e=document.getElementById(id);if(e)e[html?'innerHTML':'textContent']=v||''};
   set('heroBadge',d.hero?.badge);set('heroTitle',d.hero?.title,true);set('heroText',d.hero?.text);
-  set('aboutTitle',d.about?.title);set('aboutText',d.about?.text);set('ctaTitle',d.cta?.title);set('ctaText',d.cta?.text);
+  set('aboutTitle',d.about?.title);
+  document.documentElement.style.setProperty('--blue',d.general?.primaryColor||'#0d64d8');document.documentElement.style.setProperty('--orange',d.general?.accentColor||'#ff6b18');
+  document.querySelectorAll('.brand span').forEach(e=>e.textContent=d.general?.siteName||'');document.querySelectorAll('.brand img').forEach(e=>{if(d.general?.logo)e.src=d.general.logo});
+  const acts=document.querySelectorAll('.hero .actions a');if(acts[0]){acts[0].textContent=(d.hero?.primaryText||'')+' ←';acts[0].href=d.hero?.primaryLink||'#'}if(acts[1]){acts[1].textContent=d.hero?.secondaryText||'';acts[1].href=d.hero?.secondaryLink||'#'}
+  const stats=document.querySelectorAll('.hero .stat');[['stat1Value','stat1Label'],['stat2Value','stat2Label'],['stat3Value','stat3Label']].forEach((k,i)=>{if(stats[i]){stats[i].querySelector('strong').textContent=d.hero?.[k[0]]||'';stats[i].querySelector('small').textContent=d.hero?.[k[1]]||''}});
+  const footerDesc=document.querySelector('footer .footer-grid>div:first-child p');if(footerDesc)footerDesc.textContent=d.general?.footerText||'';const copy=document.querySelector('footer .copy');if(copy)copy.textContent=d.general?.copyright||'';set('aboutText',d.about?.text);set('ctaTitle',d.cta?.title);set('ctaText',d.cta?.text);
   document.querySelectorAll('[data-site="phone"]').forEach(e=>e.textContent=d.general?.phone||'');
   document.querySelectorAll('[data-site="email"]').forEach(e=>e.textContent=d.general?.email||'');
   document.querySelectorAll('[data-site="address"]').forEach(e=>e.textContent=d.general?.address||'');
