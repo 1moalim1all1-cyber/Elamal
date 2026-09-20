@@ -48,6 +48,16 @@ export default function AdminSettings() {
           />
         </Field>
 
+        <Field label="رابط صورة نبذة عن الشركة">
+          <input
+            dir="ltr"
+            value={form.aboutImageUrl ?? ""}
+            onChange={(e) => setForm({ ...form, aboutImageUrl: e.target.value })}
+            placeholder="https://..."
+            className="input"
+          />
+        </Field>
+
         <Field label="رقم الهاتف الأساسي">
           <input
             dir="ltr"
