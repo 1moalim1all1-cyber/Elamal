@@ -16,12 +16,16 @@
   const mediaParent = (img) => img.closest('[class*="aspect-"]') || img.parentElement;
 
   const removeProjectPlaceholder = (img) => {
-    const card = img.closest('a[href^="/projects"]');
+    const projectCard = img.closest('a[href^="/projects"]');
     const source = img.currentSrc || img.getAttribute("src") || "";
     const isRepeatedWorkerPhoto = source.includes("photo-1589939705384-5185137a7f0f");
-    const isMissingProjectPhoto = card && (!source || (img.complete && !img.naturalWidth));
-    if (card && (isRepeatedWorkerPhoto || isMissingProjectPhoto)) {
-      card.remove();
+    const isMissingProjectPhoto = projectCard && (!source || (img.complete && !img.naturalWidth));
+    if (isRepeatedWorkerPhoto) {
+      (img.closest("a") || mediaParent(img))?.remove();
+      return true;
+    }
+    if (projectCard && isMissingProjectPhoto) {
+      projectCard.remove();
       return true;
     }
     return false;
