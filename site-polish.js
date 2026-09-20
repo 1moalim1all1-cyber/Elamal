@@ -32,7 +32,17 @@
       return true;
     }
     if (projectCard && isMissingProjectPhoto) {
-      removeCardAndSlot(projectCard);
+      if (!img.dataset.elamalMissingPending) {
+        img.dataset.elamalMissingPending = "true";
+        setTimeout(() => {
+          const latestSource = img.currentSrc || img.getAttribute("src") || "";
+          if (!latestSource) removeCardAndSlot(projectCard);
+          else {
+            delete img.dataset.elamalMissingPending;
+            protect(img);
+          }
+        }, 700);
+      }
       return true;
     }
     return false;
