@@ -6,6 +6,7 @@ const defaultSettings: SiteSettings = {
   companyName: "اسم الشركة للدهانات",
   companyDescription: "شريكك الموثوق لدهانات داخلية وخارجية وديكورية بجودة عالمية.",
   logoUrl: "",
+  aboutImageUrl: "",
   phones: ["01000000000"],
   whatsappNumber: "201000000000",
   email: "info@example.com",
