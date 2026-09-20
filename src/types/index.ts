@@ -164,6 +164,7 @@ export interface SiteSettings {
   companyName: string;
   companyDescription: string;
   logoUrl: string;
+  aboutImageUrl?: string;
   faviconUrl?: string;
   phones: string[];
   whatsappNumber: string;
