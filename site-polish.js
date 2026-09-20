@@ -15,8 +15,21 @@
 
   const mediaParent = (img) => img.closest('[class*="aspect-"]') || img.parentElement;
 
+  const removeProjectPlaceholder = (img) => {
+    const card = img.closest('a[href^="/projects"]');
+    const source = img.currentSrc || img.getAttribute("src") || "";
+    const isRepeatedWorkerPhoto = source.includes("photo-1589939705384-5185137a7f0f");
+    const isMissingProjectPhoto = card && (!source || (img.complete && !img.naturalWidth));
+    if (card && (isRepeatedWorkerPhoto || isMissingProjectPhoto)) {
+      card.remove();
+      return true;
+    }
+    return false;
+  };
+
   const protect = (img) => {
     if (!(img instanceof HTMLImageElement) || img.dataset.elamalProtected) return;
+    if (removeProjectPlaceholder(img)) return;
     img.dataset.elamalProtected = "true";
     const parent = mediaParent(img);
     if (parent) {
@@ -26,6 +39,10 @@
 
     const fallback = () => {
       if (img.dataset.elamalFallback === "true") return;
+      if (img.closest('a[href^="/projects"]')) {
+        img.closest('a[href^="/projects"]')?.remove();
+        return;
+      }
       img.dataset.elamalFallback = "true";
       img.srcset = "";
       img.src = pickPhoto(img);
