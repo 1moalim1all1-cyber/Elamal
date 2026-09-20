@@ -15,17 +15,24 @@
 
   const mediaParent = (img) => img.closest('[class*="aspect-"]') || img.parentElement;
 
+  const removeCardAndSlot = (card) => {
+    if (!card) return;
+    const slot = card.parentElement;
+    if (slot && slot.children.length === 1 && slot.className.includes("transition-all")) slot.remove();
+    else card.remove();
+  };
+
   const removeProjectPlaceholder = (img) => {
     const projectCard = img.closest('a[href^="/projects"]');
     const source = img.currentSrc || img.getAttribute("src") || "";
     const isRepeatedWorkerPhoto = source.includes("photo-1589939705384-5185137a7f0f");
     const isMissingProjectPhoto = projectCard && (!source || (img.complete && !img.naturalWidth));
     if (isRepeatedWorkerPhoto) {
-      (img.closest("a") || mediaParent(img))?.remove();
+      removeCardAndSlot(img.closest("a") || mediaParent(img));
       return true;
     }
     if (projectCard && isMissingProjectPhoto) {
-      projectCard.remove();
+      removeCardAndSlot(projectCard);
       return true;
     }
     return false;
@@ -44,7 +51,7 @@
     const fallback = () => {
       if (img.dataset.elamalFallback === "true") return;
       if (img.closest('a[href^="/projects"]')) {
-        img.closest('a[href^="/projects"]')?.remove();
+        removeCardAndSlot(img.closest('a[href^="/projects"]'));
         return;
       }
       img.dataset.elamalFallback = "true";
