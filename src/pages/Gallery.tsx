@@ -2,12 +2,12 @@ import { useState } from "react";
 import { X, ChevronRight, ChevronLeft } from "lucide-react";
 import { useCollection } from "@/hooks/useCollection";
 import { galleryService } from "@/services";
-import { demoGallery } from "@/data/demoData";
 import { PageHeader } from "@/components/ui/PageHeader";
 
 export default function Gallery() {
   const { items: live } = useCollection((cb) => galleryService.subscribe(cb));
-  const images = live.length ? live : demoGallery;
+  // المعرض يعرض فقط الصور التي تضيفها الإدارة من Firestore.
+  const images = live;
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
