@@ -1,0 +1,81 @@
+/* Visual polish layer shared by every public page. */
+:root {
+  --elamal-navy: #10233d;
+  --elamal-blue: #244f82;
+  --elamal-gold: #efa82f;
+  --elamal-cream: #f8f5ee;
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% 18%, rgba(239, 168, 47, .08), transparent 26rem),
+    linear-gradient(180deg, #fff 0%, var(--elamal-cream) 100%);
+}
+
+header { backdrop-filter: blur(14px); }
+
+main > section,
+main > div > section { position: relative; }
+
+main h1, main h2 { text-wrap: balance; letter-spacing: -.025em; }
+main p { text-wrap: pretty; }
+
+/* Never show an empty media area while an uploaded image is missing or unavailable. */
+[data-elamal-media] {
+  background: linear-gradient(135deg, #e9eef3, #f7efe0);
+  isolation: isolate;
+}
+
+[data-elamal-media]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(16, 35, 61, .04), transparent 45%, rgba(239, 168, 47, .12));
+  z-index: 1;
+}
+
+[data-elamal-media] > img {
+  opacity: 1;
+  transition: transform .7s cubic-bezier(.2,.75,.25,1), opacity .25s ease;
+}
+
+[data-elamal-media].is-loading > img { opacity: 0; }
+
+/* Softer cards and more deliberate hover states across products, projects and articles. */
+main a[class*="rounded-2xl"],
+main a[class*="rounded-3xl"] {
+  box-shadow: 0 10px 35px rgba(16, 35, 61, .08);
+}
+
+main a[class*="rounded-2xl"]:hover,
+main a[class*="rounded-3xl"]:hover {
+  box-shadow: 0 22px 55px rgba(16, 35, 61, .16);
+}
+
+main img { background-color: #edf1f4; }
+
+/* Small brand accent that gives light sections depth without crowding them. */
+main section:nth-of-type(even)::before {
+  content: "";
+  position: absolute;
+  width: 13rem;
+  height: 13rem;
+  left: -8rem;
+  top: 2rem;
+  border-radius: 999px;
+  background: rgba(239, 168, 47, .07);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  main section { overflow: hidden; }
+  main h1 { font-size: clamp(2rem, 10vw, 3rem) !important; line-height: 1.2 !important; }
+  main h2 { font-size: clamp(1.65rem, 7vw, 2.25rem) !important; line-height: 1.3 !important; }
+  main a[class*="rounded-2xl"], main a[class*="rounded-3xl"] { box-shadow: 0 8px 24px rgba(16,35,61,.09); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-elamal-media] > img { transition: none; }
+}
