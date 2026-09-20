@@ -26,7 +26,7 @@
     const projectCard = img.closest('a[href^="/projects"]');
     const source = img.currentSrc || img.getAttribute("src") || "";
     const isRepeatedWorkerPhoto = source.includes("photo-1589939705384-5185137a7f0f");
-    const isMissingProjectPhoto = projectCard && (!source || (img.complete && !img.naturalWidth));
+    const isMissingProjectPhoto = projectCard && !source;
     if (isRepeatedWorkerPhoto) {
       removeCardAndSlot(img.closest("a") || mediaParent(img));
       return true;
@@ -51,7 +51,6 @@
     const fallback = () => {
       if (img.dataset.elamalFallback === "true") return;
       if (img.closest('a[href^="/projects"]')) {
-        removeCardAndSlot(img.closest('a[href^="/projects"]'));
         return;
       }
       img.dataset.elamalFallback = "true";
