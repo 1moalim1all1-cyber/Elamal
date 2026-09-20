@@ -7,7 +7,9 @@ import { PageHeader } from "@/components/ui/PageHeader";
 export default function Gallery() {
   const { items: live } = useCollection((cb) => galleryService.subscribe(cb));
   // المعرض يعرض فقط الصور التي تضيفها الإدارة من Firestore.
-  const images = live;
+  // إخفاء محتوى المعرض القديم؛ تظهر فقط الصور التي تضيفها الإدارة بعد هذا التحديث.
+  const galleryResetAt = 1789890792000;
+  const images = live.filter((img) => (img.createdAt ?? 0) > galleryResetAt);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
