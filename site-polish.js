@@ -1,114 +1,30 @@
-/* Resilient image treatment for CMS content on every route. */
+/* Safe image fallbacks. CMS-controlled projects and gallery are never changed here. */
 (() => {
   const photos = {
     interior: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1200&h=900&fit=crop&auto=format&q=82",
-    painter: "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=1200&h=900&fit=crop&auto=format&q=82",
-    wall: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=1200&h=900&fit=crop&auto=format&q=82"
-  };
-
-  const pickPhoto = (img) => {
-    const text = `${img.alt || ""} ${img.closest("a")?.getAttribute("href") || ""}`.toLowerCase();
-    if (/مشروع|project|خارجي|عزل/.test(text)) return photos.wall;
-    if (/مقال|article|تجهيز|دهان/.test(text)) return photos.painter;
-    return photos.interior;
-  };
-
-  const mediaParent = (img) => img.closest('[class*="aspect-"]') || img.parentElement;
-
-  const removeCardAndSlot = (card) => {
-    if (!card) return;
-    const slot = card.parentElement;
-    if (slot && slot.children.length === 1 && slot.className.includes("transition-all")) slot.remove();
-    else card.remove();
-  };
-
-  const moveProjectSlotToEnd = (card) => {
-    if (!card) return;
-    const slot = card.parentElement && card.parentElement.children.length === 1
-      ? card.parentElement
-      : card;
-    slot.style.order = "999";
-    slot.style.visibility = "hidden";
-    slot.style.pointerEvents = "none";
-  };
-
-  const removeProjectPlaceholder = (img) => {
-    const projectCard = img.closest('a[href^="/projects"]');
-    const source = img.currentSrc || img.getAttribute("src") || "";
-    const isRepeatedWorkerPhoto = source.includes("photo-1589939705384-5185137a7f0f");
-    const isMissingProjectPhoto = projectCard && !source;
-    if (isRepeatedWorkerPhoto) {
-      if (projectCard) moveProjectSlotToEnd(projectCard);
-      else removeCardAndSlot(img.closest("a") || mediaParent(img));
-      return true;
-    }
-    if (projectCard && isMissingProjectPhoto) {
-      if (!img.dataset.elamalMissingPending) {
-        img.dataset.elamalMissingPending = "true";
-        setTimeout(() => {
-          const latestSource = img.currentSrc || img.getAttribute("src") || "";
-          if (!latestSource) moveProjectSlotToEnd(projectCard);
-          else {
-            delete img.dataset.elamalMissingPending;
-            protect(img);
-          }
-        }, 2000);
-      }
-      return true;
-    }
-    return false;
+    painter: "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=1200&h=900&fit=crop&auto=format&q=82"
   };
 
   const protect = (img) => {
     if (!(img instanceof HTMLImageElement) || img.dataset.elamalProtected) return;
-    if (removeProjectPlaceholder(img)) return;
+    if (img.closest('a[href^="/projects"]') || location.pathname.startsWith("/gallery")) return;
     img.dataset.elamalProtected = "true";
-    const parent = mediaParent(img);
-    if (parent) {
-      parent.dataset.elamalMedia = "true";
-      if (getComputedStyle(parent).position === "static") parent.style.position = "relative";
-    }
 
-    const fallback = () => {
+    img.addEventListener("error", () => {
       if (img.dataset.elamalFallback === "true") return;
-      if (img.closest('a[href^="/projects"]')) {
-        return;
-      }
+      const text = `${img.alt || ""} ${img.closest("a")?.getAttribute("href") || ""}`;
       img.dataset.elamalFallback = "true";
       img.srcset = "";
-      img.src = pickPhoto(img);
+      img.src = /مقال|article|تجهيز|دهان/.test(text) ? photos.painter : photos.interior;
       img.alt = img.alt || "دهانات الأمل";
-      parent?.classList.remove("is-loading");
-    };
-
-    img.addEventListener("error", fallback, { once: true });
-    if (!img.getAttribute("src")) fallback();
-    else if (img.complete && !img.naturalWidth) fallback();
+    }, { once: true });
   };
 
-  const fillEmptyMedia = (root = document) => {
-    root.querySelectorAll?.("img").forEach(protect);
-    root.querySelectorAll?.('[class*="aspect-"]').forEach((box) => {
-      if (box.querySelector("img") || box.children.length) return;
-      box.dataset.elamalMedia = "true";
-      if (getComputedStyle(box).position === "static") box.style.position = "relative";
-      const img = document.createElement("img");
-      img.alt = "خبرة الأمل في الدهانات والتشطيبات";
-      img.src = photos.interior;
-      img.loading = "lazy";
-      img.decoding = "async";
-      img.className = "h-full w-full object-cover";
-      box.appendChild(img);
-      protect(img);
-    });
-  };
-
-  fillEmptyMedia();
-  const observer = new MutationObserver((changes) => {
+  const scan = (root = document) => root.querySelectorAll?.("img").forEach(protect);
+  scan();
+  new MutationObserver((changes) => {
     for (const change of changes) {
-      for (const node of change.addedNodes) if (node.nodeType === 1) fillEmptyMedia(node);
+      for (const node of change.addedNodes) if (node.nodeType === 1) scan(node);
     }
-  });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-  window.addEventListener("load", () => setTimeout(fillEmptyMedia, 250));
+  }).observe(document.documentElement, { childList: true, subtree: true });
 })();
