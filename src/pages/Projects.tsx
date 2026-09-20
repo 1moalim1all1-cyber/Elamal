@@ -2,12 +2,12 @@ import { Link } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import { useCollection } from "@/hooks/useCollection";
 import { projectsService } from "@/services";
-import { demoProjects } from "@/data/demoData";
 import { PageHeader } from "@/components/ui/PageHeader";
 
 export default function Projects() {
   const { items: live } = useCollection((cb) => projectsService.subscribe(cb));
-  const projects = (live.length ? live : demoProjects).filter((p) => p.isPublished);
+  // المشاريع المعروضة هي المشاريع التي تضيفها الإدارة فقط.
+  const projects = live.filter((p) => p.isPublished);
 
   return (
     <div>
