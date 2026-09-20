@@ -24,8 +24,10 @@ import {
   demoHomeSections,
 } from "@/data/demoData";
 import type { HomeSectionType } from "@/types";
+import { useSiteSettings } from "@/context/SiteSettingsContext";
 
 export default function Home() {
+  const { settings } = useSiteSettings();
   const { items: slides } = useCollection((cb) => heroSlidesService.subscribe(cb));
   const { items: categories } = useCollection((cb) => productCategoriesService.subscribe(cb));
   const { items: products } = useCollection((cb) => productsService.subscribe(cb));
@@ -48,7 +50,7 @@ export default function Home() {
 
   const sectionRenderers: Record<HomeSectionType, React.ReactNode> = {
     hero: <HeroSlider slides={effectiveSlides} />,
-    about: <AboutSection />,
+    about: <AboutSection imageUrl={settings.aboutImageUrl} />,
     paintTypes: <PaintTypesSection categories={effectiveCategories} />,
     intro: null,
     products: (
