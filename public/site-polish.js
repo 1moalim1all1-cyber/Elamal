@@ -22,13 +22,24 @@
     else card.remove();
   };
 
+  const moveProjectSlotToEnd = (card) => {
+    if (!card) return;
+    const slot = card.parentElement && card.parentElement.children.length === 1
+      ? card.parentElement
+      : card;
+    slot.style.order = "999";
+    slot.style.visibility = "hidden";
+    slot.style.pointerEvents = "none";
+  };
+
   const removeProjectPlaceholder = (img) => {
     const projectCard = img.closest('a[href^="/projects"]');
     const source = img.currentSrc || img.getAttribute("src") || "";
     const isRepeatedWorkerPhoto = source.includes("photo-1589939705384-5185137a7f0f");
     const isMissingProjectPhoto = projectCard && !source;
     if (isRepeatedWorkerPhoto) {
-      removeCardAndSlot(img.closest("a") || mediaParent(img));
+      if (projectCard) moveProjectSlotToEnd(projectCard);
+      else removeCardAndSlot(img.closest("a") || mediaParent(img));
       return true;
     }
     if (projectCard && isMissingProjectPhoto) {
@@ -36,12 +47,12 @@
         img.dataset.elamalMissingPending = "true";
         setTimeout(() => {
           const latestSource = img.currentSrc || img.getAttribute("src") || "";
-          if (!latestSource) removeCardAndSlot(projectCard);
+          if (!latestSource) moveProjectSlotToEnd(projectCard);
           else {
             delete img.dataset.elamalMissingPending;
             protect(img);
           }
-        }, 700);
+        }, 2000);
       }
       return true;
     }
